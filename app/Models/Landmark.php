@@ -18,6 +18,15 @@ class Landmark extends Model
         'metadata',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            $this->postgisColumns = [];
+        }
+    }
+
     protected array $postgisColumns = [
         'area' => [
             'type' => 'geometry',

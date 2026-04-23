@@ -6,11 +6,11 @@
     <title>FleetCo | Drive Tomorrow Today</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;400;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #020202; font-family: 'Outfit', sans-serif; overflow: hidden; }
-        .font-mono { font-family: 'JetBrains+Mono', monospace; }
-        .letter-spacing-huge { letter-spacing: 0.8em; }
+        body { background-color: #020202; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .letter-spacing-tight { letter-spacing: -0.02em; }
         .glass-obsidian { background: rgba(5, 5, 8, 0.7); backdrop-filter: blur(20px); }
         .hero-image { transform: scale(1.1); filter: brightness(0.6); }
         .speed-gauge { stroke-dasharray: 440; stroke-dashoffset: 440; }
@@ -79,16 +79,26 @@
                 <div class="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_#ff8a00]"></div>
                 <span class="text-[10px] font-black uppercase tracking-[0.4em]">Live State</span>
             </div>
-            <a href="{{ route('dashboard') }}" class="group relative px-10 py-4 overflow-hidden rounded-full border border-white/10 active:scale-95 transition-all">
-                <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                <span class="relative z-10 text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-black transition-colors duration-500">Enter Command Hub</span>
-            </a>
+            <div class="flex items-center gap-6">
+                @auth
+                    <a href="{{ route('dashboard') }}" class="group relative px-10 py-4 overflow-hidden rounded-full border border-white/10 active:scale-95 transition-all">
+                        <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                        <span class="relative z-10 text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-black transition-colors duration-500">Enter Command Hub</span>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-400 hover:text-white transition-colors">Access_Login</a>
+                    <a href="{{ route('register') }}" class="group relative px-8 py-3 overflow-hidden rounded-full border border-primary/30 active:scale-95 transition-all">
+                        <div class="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                        <span class="relative z-10 text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-white transition-colors duration-500">Register_Node</span>
+                    </a>
+                @endauth
+            </div>
         </nav>
 
         <!-- Content Matrix -->
         <div class="relative z-10 flex flex-col items-center justify-center min-h-[70vh] text-center px-6 mt-[-5vh]">
-            <span id="label" class="text-[10px] font-mono uppercase tracking-[1em] text-primary mb-8 opacity-0 translate-y-4">real-time vehicle intelligence</span>
-            <h1 id="title" class="text-6xl md:text-[10rem] font-black uppercase tracking-tighter leading-[0.8] mb-12 opacity-0">
+            <span id="label" class="text-[10px] uppercase tracking-[0.4em] text-primary mb-8 opacity-0 translate-y-4">real-time vehicle intelligence</span>
+            <h1 id="title" class="font-heading text-6xl md:text-[8rem] font-extrabold tracking-tight leading-[0.9] mb-12 opacity-0">
                 FLEET <br>
                 COMMAND
             </h1>

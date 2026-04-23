@@ -20,8 +20,8 @@ class PlaybackController extends Controller
 
         $path = $logs->map(function($log) {
             return [
-                'lat' => $log->location->latitude,
-                'lng' => $log->location->longitude,
+                'lat' => $log->location->getLatitude(),
+                'lng' => $log->location->getLongitude(),
                 'speed' => $log->speed,
                 'time' => $log->captured_at->format('H:i:s'),
                 'raw_time' => $log->captured_at->toIso8601String()

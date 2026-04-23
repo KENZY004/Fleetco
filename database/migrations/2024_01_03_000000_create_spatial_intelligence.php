@@ -17,13 +17,19 @@ return new class extends Migration
             $table->enum('type', ['depot', 'client', 'restricted', 'optimized_route'])->default('client');
             
             // Spatial Intelligence: Using Geography for complex geofence shapes
-            $table->geography('area', subtype: 'polygon', srid: 4326);
+            if (DB::getDriverName() === 'sqlite') {
+                $table->text('area');
+            } else {
+                $table->geography('area', subtype: 'polygon', srid: 4326);
+            }
             
             $table->json('metadata')->nullable(); // For customer info, notes
             $table->timestamps();
         });
 
-        DB::statement('CREATE INDEX landmarks_area_spatial_index ON landmarks USING GIST (area)');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('CREATE INDEX landmarks_area_spatial_index ON landmarks USING GIST (area)');
+        }
 
         Schema::create('risk_events', function (Blueprint $table) {
             $table->id();

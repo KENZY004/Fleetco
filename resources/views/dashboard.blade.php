@@ -16,11 +16,11 @@
         <div class="col-span-12 lg:col-span-8 lg:row-span-8 relative min-h-[500px] bg-obsidian-900 border border-border rounded-[2rem] overflow-hidden group shadow-2xl">
             <!-- Map Overlay: HUD -->
             <div class="absolute top-8 left-8 z-[1000] glass-obsidian p-5 rounded-2xl border border-white/10 pointer-events-none">
-                <div class="text-[10px] text-primary uppercase font-black tracking-[0.4em] mb-2">Neural Spatial Matrix</div>
-                <div class="text-lg font-bold text-white tracking-tighter mb-1" x-text="viewportCoords"></div>
+                <div class="text-[10px] text-orange-500 uppercase font-bold tracking-wider mb-2">Real-time Map Data</div>
+                <div class="font-heading text-lg font-bold text-white tracking-tight mb-1" x-text="viewportCoords"></div>
                 <div class="flex items-center gap-2">
                     <div class="h-1 w-1 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Active Link: Stable</span>
+                    <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">System Status: Online</span>
                 </div>
             </div>
 
@@ -29,10 +29,10 @@
 
             <!-- Side HUD: Telemetry -->
             <div class="absolute bottom-8 right-8 z-[1000] glass-obsidian p-6 rounded-2xl w-56 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 border border-white/10">
-                <h4 class="text-[10px] font-black mb-4 uppercase text-zinc-500 tracking-[0.3em]">Telemetry Signatures</h4>
+                <h4 class="text-[10px] font-bold mb-4 uppercase text-zinc-500 tracking-wider">Map Legend</h4>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                        <span class="text-zinc-400">PostGIS Trail</span>
+                        <span class="text-zinc-400">Vehicle Route</span>
                         <div class="w-8 h-1 bg-primary rounded-full shadow-[0_0_8px_#ff8a00]"></div>
                     </div>
                     <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
@@ -56,27 +56,27 @@
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
                     </div>
                     <div>
-                        <div class="text-[10px] text-zinc-500 uppercase font-black tracking-[0.3em] mb-1">Target Identity</div>
-                        <h3 class="text-2xl font-extrabold text-white tracking-tighter" x-text="selectedVehicle?.license_plate"></h3>
+                        <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Vehicle Details</div>
+                        <h3 class="font-heading text-2xl font-bold text-white tracking-tight" x-text="selectedVehicle?.license_plate"></h3>
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-8 mb-10">
                     <div class="p-6 rounded-2xl bg-white/5">
-                        <div class="text-[10px] text-zinc-500 uppercase font-black tracking-[0.3em] mb-2">Performance Integrity Index</div>
-                        <div class="text-3xl font-extrabold text-white">92<span class="text-primary text-sm ml-1">%</span></div>
+                        <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Driver Safety Score</div>
+                        <div class="font-heading text-3xl font-bold text-white tracking-tight">92<span class="text-primary text-sm ml-1">%</span></div>
                     </div>
                     <div class="p-6 rounded-2xl bg-white/5">
-                        <div class="text-[10px] text-zinc-500 uppercase font-black tracking-[0.3em] mb-2">Status</div>
+                        <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-[0.2em] mb-2">Status</div>
                         <div class="flex items-center gap-2 mt-1">
                             <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                            <span class="text-xs font-bold text-white uppercase tracking-widest" x-text="selectedVehicle?.latest_log ? 'Neural Sync Active' : 'Idle Unit'"></span>
+                            <span class="text-xs font-bold text-white uppercase tracking-widest" x-text="selectedVehicle?.latest_log ? 'Tracking Active' : 'Offline'"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="p-6 rounded-2xl border border-border font-mono text-[11px] mb-10">
-                    <div class="text-zinc-500 uppercase font-black text-[9px] mb-4 tracking-[0.4em]">PostGIS Proximity Hub</div>
+                    <div class="text-zinc-500 uppercase font-bold text-[9px] mb-4 tracking-wider">Location Intelligence</div>
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-zinc-500">CENTROID_DIST</span>
@@ -92,9 +92,9 @@
                 <div class="flex gap-4">
                     <button 
                         @click="visualiseMission()"
-                        class="flex-1 py-5 bg-white text-black rounded-full text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/90 transition-all shadow-[0_10px_40px_rgba(255,255,255,0.1)] active:scale-95"
+                        class="flex-1 py-5 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95"
                     >
-                        Visualise Mission
+                        Replay Route
                     </button>
                     <button 
                         class="px-6 py-5 border border-white/10 rounded-full text-zinc-500 hover:text-white transition-colors"
@@ -109,14 +109,14 @@
                 <div class="w-20 h-20 rounded-full border border-white/5 flex items-center justify-center mb-8 opacity-20">
                     <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
                 </div>
-                <h4 class="text-[10px] text-zinc-500 uppercase tracking-[0.4em] font-black">Awaiting Neural Focus</h4>
+                <h4 class="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Select a vehicle to view data</h4>
             </div>
         </div>
 
         <!-- Vehicle Fleet Matrix -->
         <div class="col-span-12 lg:col-span-3 lg:row-span-4 fleetco-card rounded-[2rem] overflow-hidden flex flex-col">
             <div class="py-6 px-8 border-b border-border bg-obsidian-900/50 flex justify-between items-center">
-                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Fleet Index</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Fleet List</span>
                 <span class="text-[9px] font-bold px-2 py-1 bg-white/5 text-white uppercase" x-text="vehicles.length + ' Units'"></span>
             </div>
             <div class="flex-1 overflow-y-auto custom-scrollbar">
@@ -128,8 +128,8 @@
                             :class="selectedVehicle?.id == vehicle.id ? 'bg-white/5 border-l-4 border-primary' : ''"
                         >
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-xs font-bold text-white uppercase tracking-widest truncate" x-text="vehicle.name"></h4>
-                                <span class="text-[10px] font-mono text-zinc-600 uppercase tracking-tighter" x-text="vehicle.license_plate"></span>
+                                <h4 class="text-sm font-bold text-white tracking-tight truncate" x-text="vehicle.name"></h4>
+                                <span class="text-[10px] font-medium text-zinc-600 tracking-tight" x-text="vehicle.license_plate"></span>
                             </div>
                             <div 
                                 class="h-1.5 w-1.5 rounded-full"
@@ -141,8 +141,6 @@
             </div>
         </div>
 
-            <x-trip-history :trips="$trips" />
-        </div>
         <!-- Mission Ledger -->
         <div class="col-span-12 lg:col-span-5 lg:row-span-4">
             <x-trip-history :trips="$trips" />
@@ -156,9 +154,9 @@
                 </svg>
                 <div class="absolute inset-0 rounded-full border-4 border-primary/20 scale-0 group-hover:scale-100 transition-transform duration-700"></div>
             </div>
-            <div class="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-2">PWA Status</div>
-            <h3 class="text-lg font-bold text-white uppercase tracking-widest">Encrypted Local Cache</h3>
-            <span class="text-[10px] font-mono text-zinc-600 mt-2 uppercase tracking-widest">Offline Access Enabled</span>
+            <div class="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-2">Offline Capability</div>
+            <h3 class="font-heading text-lg font-bold text-white uppercase tracking-widest">Local Data Storage</h3>
+            <span class="text-[10px] font-medium text-zinc-600 mt-2 tracking-tight">Access telemetry even without a connection</span>
         </div>
 
     </div>
@@ -213,7 +211,7 @@
                 this.vehicles.forEach(vehicle => {
                     if (vehicle.telematics_logs && vehicle.telematics_logs.length > 0) {
                         const log = vehicle.telematics_logs[0];
-                        const coords = [log.location.latitude, log.location.longitude];
+                        const coords = [log.location.coordinates[1], log.location.coordinates[0]];
 
                         if (this.markers[vehicle.id]) {
                             this.markers[vehicle.id].setLatLng(coords);
@@ -242,7 +240,7 @@
                 this.selectedVehicle = vehicle;
                 if (vehicle.telematics_logs && vehicle.telematics_logs.length > 0) {
                     const log = vehicle.telematics_logs[0];
-                    const coords = [log.location.latitude, log.location.longitude];
+                    const coords = [log.location.coordinates[1], log.location.coordinates[0]];
                     
                     this.map.flyTo(coords, 14, { duration: 2.0, easeLinearity: 0.1 });
                     this.calculateHaversine(coords);
@@ -275,7 +273,7 @@
                             if (updated) {
                                 this.selectedVehicle = updated;
                                 if (updated.telematics_logs && updated.telematics_logs.length > 0) {
-                                    this.calculateHaversine([updated.telematics_logs[0].location.latitude, updated.telematics_logs[0].location.longitude]);
+                                    this.calculateHaversine([updated.telematics_logs[0].location.coordinates[1], updated.telematics_logs[0].location.coordinates[0]]);
                                 }
                             }
                         }

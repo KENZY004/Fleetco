@@ -21,6 +21,15 @@ class TelematicsLog extends Model
         'captured_at',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            $this->postgisColumns = [];
+        }
+    }
+
     /**
      * Spatial configuration for Magellan.
      */

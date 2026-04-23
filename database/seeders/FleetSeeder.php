@@ -38,6 +38,7 @@ class FleetSeeder extends Seeder
 
         // 3. Create Vehicles & Initial Logs
         $vehicles = [
+            ['name' => 'Mobile Unit Alpha', 'license_plate' => 'MOBILE-01', 'status' => 'offline', 'lat' => 19.0760, 'lng' => 72.8777],
             ['name' => 'Scout-01', 'license_plate' => 'IF-2024-X1', 'status' => 'active', 'lat' => 19.0760, 'lng' => 72.8777],
             ['name' => 'Heavy-Cargo-04', 'license_plate' => 'IF-2024-H4', 'status' => 'active', 'lat' => 19.2183, 'lng' => 72.9781],
             ['name' => 'intercept-V8', 'license_plate' => 'IF-2024-V8', 'status' => 'idle', 'lat' => 18.9220, 'lng' => 72.8347],

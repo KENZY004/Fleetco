@@ -11,19 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vehicles', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('license_plate')->unique();
-            $table->enum('status', ['active', 'idle', 'maintenance', 'offline'])->default('offline');
-            $table->timestamps();
-        });
-
         Schema::create('drivers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->string('name');
             $table->decimal('risk_score', 5, 2)->default(100.00);
+            $table->timestamps();
+        });
+
+        Schema::create('vehicles', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('license_plate')->unique();
+            $table->enum('status', ['active', 'idle', 'maintenance', 'offline'])->default('offline');
+            $table->foreignId('current_driver_id')->nullable()->constrained('drivers')->onDelete('set null');
             $table->timestamps();
         });
 
@@ -33,7 +34,11 @@ return new class extends Migration
             $table->foreignId('driver_id')->nullable()->constrained()->onDelete('set null');
             
             // Spatial Intelligence: Using Geography point for global GPS coords
-            $table->geography('location', subtype: 'point', srid: 4326);
+            if (DB::getDriverName() === 'sqlite') {
+                $table->text('location');
+            } else {
+                $table->geography('location', subtype: 'point', srid: 4326);
+            }
             
             $table->float('speed')->default(0); // km/h
             $table->float('heading')->default(0); // degrees
@@ -43,7 +48,9 @@ return new class extends Migration
         });
 
         // Use raw SQL for spatial index to avoid grammar conflicts
-        DB::statement('CREATE INDEX telematics_location_spatial_index ON telematics_logs USING GIST (location)');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('CREATE INDEX telematics_location_spatial_index ON telematics_logs USING GIST (location)');
+        }
     }
 
     /**

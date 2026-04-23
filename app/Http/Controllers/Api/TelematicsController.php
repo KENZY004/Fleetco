@@ -5,18 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use App\Models\TelematicsLog;
-use App\Services\RiskEngineService;
+use App\Services\TelemetryProcessor;
 use Illuminate\Http\Request;
 use Clickbar\Magellan\Data\Geometries\Point;
 use Carbon\Carbon;
 
 class TelematicsController extends Controller
 {
-    protected $riskEngine;
+    protected $processor;
 
-    public function __construct(RiskEngineService $riskEngine)
+    public function __construct(TelemetryProcessor $processor)
     {
-        $this->riskEngine = $riskEngine;
+        $this->processor = $processor;
     }
 
     /**
@@ -30,7 +30,8 @@ class TelematicsController extends Controller
             'longitude' => 'required|numeric',
             'speed' => 'nullable|numeric',
             'heading' => 'nullable|numeric',
-            'secret' => 'required|string', // Simple pre-shared secret for this phase
+            'captured_at' => 'nullable|date',
+            'secret' => 'required|string',
         ]);
 
         // 1. Authenticate (Simple Phase)
@@ -44,26 +45,27 @@ class TelematicsController extends Controller
             return response()->json(['error' => 'VEHICLE_NOT_FOUND'], 404);
         }
 
-        // 3. Create Log with Magellan Point
-        $log = TelematicsLog::create([
-            'vehicle_id' => $vehicle->id,
-            'driver_id' => $vehicle->current_driver_id ?? 1, // Defaulting to 1 for now
-            'location' => Point::makeGeodetic($validated['latitude'], $validated['longitude']),
-            'speed' => $validated['speed'] ?? 0,
-            'heading' => $validated['heading'] ?? 0,
-            'captured_at' => Carbon::now(),
-        ]);
+        // 3. Process via Service
+        try {
+            $log = $this->processor->process($vehicle, [
+                'lat' => $validated['latitude'],
+                'lng' => $validated['longitude'],
+                'speed' => $validated['speed'] ?? 0,
+                'heading' => $validated['heading'] ?? 0,
+                'captured_at' => isset($validated['captured_at']) ? Carbon::parse($validated['captured_at']) : Carbon::now(),
+            ]);
 
-        // 4. Update Vehicle State
-        $vehicle->update(['status' => ($validated['speed'] > 0 ? 'active' : 'idle')]);
-
-        // 5. Run Intelligence Analysis (Risk Engine)
-        $this->riskEngine->analyze($log);
-
-        return response()->json([
-            'status' => 'TELEMETRY_INGESTED',
-            'log_id' => $log->id,
-            'risk_processed' => true
-        ]);
+            return response()->json([
+                'status' => 'TELEMETRY_INGESTED',
+                'log_id' => $log->id,
+                'vehicle_status' => $vehicle->status,
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'PROCESSING_FAILED',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

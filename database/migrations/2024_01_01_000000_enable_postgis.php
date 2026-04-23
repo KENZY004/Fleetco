@@ -10,8 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('CREATE EXTENSION IF NOT EXISTS postgis;');
-        DB::statement('CREATE EXTENSION IF NOT EXISTS postgis_topology;');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('CREATE EXTENSION IF NOT EXISTS postgis;');
+            DB::statement('CREATE EXTENSION IF NOT EXISTS postgis_topology;');
+        }
     }
 
     /**
