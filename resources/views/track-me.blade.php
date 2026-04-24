@@ -61,15 +61,26 @@
                     Initialize Uplink
                 </button>
 
-                <div class="relative">
-                    <label class="absolute -top-2.5 left-4 bg-[#08080c] px-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Device ID</label>
-                    <input 
-                        type="text" 
-                        id="license-plate" 
-                        placeholder="e.g. MOBILE-01"
-                        class="w-full bg-transparent border border-white/10 rounded-xl py-4 px-6 text-center text-sm font-bold tracking-wider focus:border-orange-500 outline-none uppercase text-white transition-colors"
-                        value="MOBILE-01"
-                    >
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label class="absolute -top-2.5 left-4 bg-[#020202] px-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Vehicle Name</label>
+                        <input 
+                            type="text" 
+                            id="vehicle-name" 
+                            placeholder="e.g. Truck 01"
+                            class="w-full bg-transparent border border-white/10 rounded-xl py-4 px-4 text-center text-xs font-bold tracking-wider focus:border-orange-500 outline-none text-white transition-colors"
+                        >
+                    </div>
+                    <div class="relative">
+                        <label class="absolute -top-2.5 left-4 bg-[#020202] px-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Plate/ID</label>
+                        <input 
+                            type="text" 
+                            id="license-plate" 
+                            placeholder="Unit ID (e.g. 01)"
+                            class="w-full bg-transparent border border-white/10 rounded-xl py-4 px-4 text-center text-xs font-bold tracking-wider focus:border-orange-500 outline-none uppercase text-white transition-colors"
+                            value=""
+                        >
+                    </div>
                 </div>
             </div>
         </div>
@@ -154,7 +165,10 @@
         }
 
         async function sendTelemetry(lat, lng, speed, heading) {
-            const plate = document.getElementById('license-plate').value || 'MOBILE-01';
+            const plate = document.getElementById('license-plate').value;
+            const name = document.getElementById('vehicle-name').value;
+
+            if (!plate) return; // Don't send if no ID provided
             
             try {
                 const response = await fetch('/api/telematics', {
@@ -162,6 +176,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         license_plate: plate,
+                        vehicle_name: name,
                         latitude: lat,
                         longitude: lng,
                         speed: speed || 0,

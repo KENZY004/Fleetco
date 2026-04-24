@@ -142,21 +142,8 @@
         </div>
 
         <!-- Mission Ledger -->
-        <div class="col-span-12 lg:col-span-5 lg:row-span-4">
+        <div class="col-span-12 lg:col-span-8 lg:row-span-4">
             <x-trip-history :trips="$trips" />
-        </div>
-
-        <!-- System State / PWA -->
-        <div class="col-span-12 lg:col-span-4 lg:row-span-4 fleetco-card p-10 flex flex-col items-center justify-center text-center rounded-[2rem] group transition-all duration-700 hover:bg-primary/5">
-            <div class="w-20 h-20 rounded-full border border-border flex items-center justify-center mb-6 relative group-hover:border-primary/50 transition-colors">
-                <svg class="w-8 h-8 text-zinc-600 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <div class="absolute inset-0 rounded-full border-4 border-primary/20 scale-0 group-hover:scale-100 transition-transform duration-700"></div>
-            </div>
-            <div class="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-2">Offline Capability</div>
-            <h3 class="font-heading text-lg font-bold text-white uppercase tracking-widest">Local Data Storage</h3>
-            <span class="text-[10px] font-medium text-zinc-600 mt-2 tracking-tight">Access telemetry even without a connection</span>
         </div>
 
     </div>
@@ -179,6 +166,7 @@
             isVisualising: false,
             playbackIndex: 0,
             playbackPath: [],
+            isFollowing: false,
 
             init() {
                 this.$nextTick(() => {
@@ -202,6 +190,12 @@
                 this.map.on('move', () => {
                     const center = this.map.getCenter();
                     this.viewportCoords = `${center.lat.toFixed(4)}° N, ${center.lng.toFixed(4)}° E`;
+                });
+
+                this.map.on('click', () => {
+                    this.selectedVehicle = null;
+                    this.isFollowing = false;
+                    this.map.flyTo([19.0760, 72.8777], 11);
                 });
 
                 this.updateMarkers();
@@ -232,12 +226,17 @@
                                 .addTo(this.map)
                                 .on('click', () => this.selectVehicle(vehicle));
                         }
+
+                        if (this.isFollowing && this.selectedVehicle?.id === vehicle.id) {
+                            this.map.panTo(coords);
+                        }
                     }
                 });
             },
 
             selectVehicle(vehicle) {
                 this.selectedVehicle = vehicle;
+                this.isFollowing = true;
                 if (vehicle.telematics_logs && vehicle.telematics_logs.length > 0) {
                     const log = vehicle.telematics_logs[0];
                     const coords = [log.location.coordinates[1], log.location.coordinates[0]];

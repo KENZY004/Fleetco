@@ -12,15 +12,18 @@ class DashboardController extends Controller
     protected $vehicleRepo;
     protected $tripRepo;
     protected $anomalyRepo;
+    protected $analyticsService;
 
     public function __construct(
         VehicleRepository $vehicleRepo,
         TripRepository $tripRepo,
-        AnomalyRepository $anomalyRepo
+        AnomalyRepository $anomalyRepo,
+        \App\Services\AnalyticsService $analyticsService
     ) {
         $this->vehicleRepo = $vehicleRepo;
         $this->tripRepo = $tripRepo;
         $this->anomalyRepo = $anomalyRepo;
+        $this->analyticsService = $analyticsService;
     }
 
     /**
@@ -31,8 +34,9 @@ class DashboardController extends Controller
         $vehicles = $this->vehicleRepo->getAllWithStatus();
         $recentAlerts = $this->anomalyRepo->getRecent(5);
         $trips = $this->tripRepo->getRecent(10);
+        $stats = $this->analyticsService->getDashboardStats();
 
-        return view('dashboard', compact('vehicles', 'recentAlerts', 'trips'));
+        return view('dashboard', compact('vehicles', 'recentAlerts', 'trips', 'stats'));
     }
 
     /**

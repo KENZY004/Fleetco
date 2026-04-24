@@ -7,7 +7,6 @@ use App\Models\Vehicle;
 use App\Models\TelematicsLog;
 use App\Services\TelemetryProcessor;
 use Illuminate\Http\Request;
-use Clickbar\Magellan\Data\Geometries\Point;
 use Carbon\Carbon;
 
 class TelematicsController extends Controller
@@ -24,43 +23,49 @@ class TelematicsController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'license_plate' => 'required|string',
+            'vehicle_name' => 'nullable|string', // Dynamic name
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'speed' => 'nullable|numeric',
             'heading' => 'nullable|numeric',
-            'captured_at' => 'nullable|date',
-            'secret' => 'required|string',
+            'secret' => 'required|string'
         ]);
 
-        // 1. Authenticate (Simple Phase)
-        if ($validated['secret'] !== config('app.telematics_secret', 'fleetco_secret_2024')) {
-            return response()->json(['error' => 'UNAUTHORIZED_ACCESS'], 401);
+        if ($request->secret !== 'fleetco_secret_2024') {
+            return response()->json(['error' => 'Invalid Uplink Secret'], 401);
         }
 
-        // 2. Resolve Vehicle
-        $vehicle = Vehicle::where('license_plate', $validated['license_plate'])->first();
-        if (!$vehicle) {
-            return response()->json(['error' => 'VEHICLE_NOT_FOUND'], 404);
+        // 1. Find or Create the vehicle dynamically
+        $vehicle = Vehicle::firstOrCreate(
+            ['license_plate' => strtoupper($request->license_plate)],
+            [
+                'name' => $request->vehicle_name ?? ('Unit ' . $request->license_plate), 
+                'status' => 'active'
+            ]
+        );
+
+        // Update name if it's provided and different
+        if ($request->vehicle_name && $vehicle->name !== $request->vehicle_name) {
+            $vehicle->update(['name' => $request->vehicle_name]);
         }
 
-        // 3. Process via Service
+        // 2. Process Telemetry using Service
         try {
             $log = $this->processor->process($vehicle, [
-                'lat' => $validated['latitude'],
-                'lng' => $validated['longitude'],
-                'speed' => $validated['speed'] ?? 0,
-                'heading' => $validated['heading'] ?? 0,
-                'captured_at' => isset($validated['captured_at']) ? Carbon::parse($validated['captured_at']) : Carbon::now(),
+                'lat' => $request->latitude,
+                'lng' => $request->longitude,
+                'speed' => $request->speed ?? 0,
+                'heading' => $request->heading ?? 0,
+                'captured_at' => now(),
             ]);
 
             return response()->json([
-                'status' => 'TELEMETRY_INGESTED',
-                'log_id' => $log->id,
-                'vehicle_status' => $vehicle->status,
+                'status' => 'success',
+                'vehicle_id' => $vehicle->id,
+                'log_id' => $log->id
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'PROCESSING_FAILED',
