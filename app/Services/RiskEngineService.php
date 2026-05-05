@@ -25,6 +25,9 @@ class RiskEngineService
 
         // 2. Check for Geofence Breaches
         $this->detectGeofenceBreach($log, $driver);
+
+        // 3. Check for Idling
+        $this->detectIdling($log, $driver);
     }
 
     /**
@@ -64,26 +67,86 @@ class RiskEngineService
         // Use Magellan to find if the current location intersects with any 'restricted' landmark
         $restrictedLandmarks = Landmark::query()
             ->where('type', 'restricted')
-            ->whereContains('area', $log->location)
+            ->whereRaw('ST_Contains(area::geometry, ST_SetSRID(ST_MakePoint(?, ?), 4326))', [
+                $log->location->getX(),
+                $log->location->getY()
+            ])
             ->get();
 
         foreach ($restrictedLandmarks as $landmark) {
             $impact = 10.00;
 
-            RiskEvent::create([
-                'driver_id' => $driver->id,
-                'vehicle_id' => $log->vehicle_id,
-                'telematics_log_id' => $log->id,
-                'type' => 'geofence_breach',
-                'impact_score' => $impact,
-                'details' => [
-                    'landmark_name' => $landmark->name,
-                    'landmark_id' => $landmark->id,
-                ],
-                'occurred_at' => $log->captured_at,
-            ]);
+            // Check if we already have an open issue for this specific breach today
+            $existingIssue = \App\Models\Issue::where('vehicle_id', $log->vehicle_id)
+                ->where('title', 'like', 'GEOFENCE BREACH: ' . $landmark->name)
+                ->where('created_at', '>=', now()->startOfDay())
+                ->first();
 
-            $this->applyScorePenalty($driver, $impact);
+            if (!$existingIssue) {
+                RiskEvent::create([
+                    'driver_id' => $driver->id,
+                    'vehicle_id' => $log->vehicle_id,
+                    'telematics_log_id' => $log->id,
+                    'type' => 'geofence_breach',
+                    'impact_score' => $impact,
+                    'details' => [
+                        'landmark_name' => $landmark->name,
+                        'landmark_id' => $landmark->id,
+                    ],
+                    'occurred_at' => $log->captured_at,
+                ]);
+
+                $issue = \App\Models\Issue::create([
+                    'vehicle_id' => $log->vehicle_id,
+                    'title' => 'GEOFENCE BREACH: ' . $landmark->name,
+                    'description' => "Asset has entered restricted operational zone: " . $landmark->name . ". Immediate dispatcher contact required.",
+                    'status' => 'open',
+                    'priority' => 'critical'
+                ]);
+
+                event(new \App\Events\IssueCreated($issue));
+                $this->applyScorePenalty($driver, $impact);
+            }
+        }
+    }
+
+    /**
+     * Logic for detecting extended idling.
+     */
+    protected function detectIdling(TelematicsLog $log, Driver $driver): void
+    {
+        if ($log->speed > 0) return;
+
+        // Check if last 4 logs (plus this one = 5) were also 0 speed
+        $recentLogs = TelematicsLog::where('vehicle_id', $log->vehicle_id)
+            ->orderBy('captured_at', 'desc')
+            ->take(5)
+            ->get();
+
+        if ($recentLogs->count() === 5 && $recentLogs->every(fn($l) => $l->speed == 0)) {
+            // Check if we already alerted idling in the last hour
+            $recentIdling = RiskEvent::where('vehicle_id', $log->vehicle_id)
+                ->where('type', 'idling')
+                ->where('occurred_at', '>=', now()->subHour())
+                ->first();
+
+            if (!$recentIdling) {
+                $impact = 2.00;
+                
+                RiskEvent::create([
+                    'driver_id' => $driver->id,
+                    'vehicle_id' => $log->vehicle_id,
+                    'telematics_log_id' => $log->id,
+                    'type' => 'idling',
+                    'impact_score' => $impact,
+                    'details' => [
+                        'duration' => 'Extended',
+                    ],
+                    'occurred_at' => $log->captured_at,
+                ]);
+
+                $this->applyScorePenalty($driver, $impact);
+            }
         }
     }
 

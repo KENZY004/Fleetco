@@ -35,6 +35,18 @@ class TelematicsLog extends Model
         'captured_at' => 'datetime',
     ];
 
+    protected $appends = ['lat', 'lng'];
+
+    public function getLatAttribute()
+    {
+        return $this->location?->getY();
+    }
+
+    public function getLngAttribute()
+    {
+        return $this->location?->getX();
+    }
+
     /**
      * Relationship to the vehicle.
      */

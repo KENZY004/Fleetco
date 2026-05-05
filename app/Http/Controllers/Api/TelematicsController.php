@@ -30,18 +30,23 @@ class TelematicsController extends Controller
             'longitude' => 'required|numeric',
             'speed' => 'nullable|numeric',
             'heading' => 'nullable|numeric',
-            'secret' => 'required|string', // Simple pre-shared secret for this phase
         ]);
 
-        // 1. Authenticate (Simple Phase)
-        if ($validated['secret'] !== config('app.telematics_secret', 'fleetco_secret_2024')) {
-            return response()->json(['error' => 'UNAUTHORIZED_ACCESS'], 401);
+        // 1. Authenticate (Sanctum)
+        $vehicle = $request->user();
+
+        if (!$vehicle || !($vehicle instanceof Vehicle)) {
+            \Log::error('Telematics failed: Invalid context');
+            return response()->json(['error' => 'INVALID_DEVICE_CONTEXT'], 403);
         }
 
-        // 2. Resolve Vehicle
-        $vehicle = Vehicle::where('license_plate', $validated['license_plate'])->first();
-        if (!$vehicle) {
-            return response()->json(['error' => 'VEHICLE_NOT_FOUND'], 404);
+        // 2. Validate Vehicle Identity matches token (Case-insensitive)
+        if (strtolower($vehicle->license_plate) !== strtolower($validated['license_plate'])) {
+            \Log::error('Telematics identity mismatch', [
+                'expected' => $vehicle->license_plate,
+                'received' => $validated['license_plate']
+            ]);
+            return response()->json(['error' => 'IDENTITY_MISMATCH'], 403);
         }
 
         // 3. Create Log with Magellan Point
@@ -54,8 +59,63 @@ class TelematicsController extends Controller
             'captured_at' => Carbon::now(),
         ]);
 
-        // 4. Update Vehicle State
-        $vehicle->update(['status' => ($validated['speed'] > 0 ? 'active' : 'idle')]);
+        // Broadcast the real-time update
+        event(new \App\Events\TelematicsReceived($log));
+
+        // 4. Update Vehicle State & Odometer
+        $lastLog = TelematicsLog::where('vehicle_id', $vehicle->id)
+                                ->orderBy('captured_at', 'desc')
+                                ->skip(1) // Skip the one we just inserted
+                                ->first();
+
+        $distanceKm = 0;
+        if ($lastLog && $lastLog->location) {
+            $lat1 = $lastLog->location->getLatitude();
+            $lon1 = $lastLog->location->getLongitude();
+            $lat2 = (float)$validated['latitude'];
+            $lon2 = (float)$validated['longitude'];
+
+            if ($lat1 != $lat2 || $lon1 != $lon2) {
+                $theta = $lon1 - $lon2;
+                $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+                $dist = acos(min(max($dist, -1.0), 1.0)); // Clamp value for acos
+                $dist = rad2deg($dist);
+                $miles = $dist * 60 * 1.1515;
+                $distanceKm = $miles * 1.609344;
+            }
+        }
+
+        $distanceKm = is_nan($distanceKm) ? 0 : $distanceKm;
+        $newOdometer = (float)$vehicle->current_odometer + $distanceKm;
+        
+        $vehicle->update([
+            'status' => ($validated['speed'] > 0 ? 'active' : 'idle'),
+            'current_odometer' => $newOdometer
+        ]);
+
+        // Check if service is required
+        if ($vehicle->next_service_at && $newOdometer >= $vehicle->next_service_at) {
+            // Check if an open maintenance issue already exists to prevent spam
+            $existingIssue = \App\Models\Issue::where('vehicle_id', $vehicle->id)
+                ->where('title', 'like', 'Maintenance Required%')
+                ->where('status', 'open')
+                ->first();
+
+            if (!$existingIssue) {
+                $issue = \App\Models\Issue::create([
+                    'vehicle_id' => $vehicle->id,
+                    'title' => 'Maintenance Required: Odometer Threshold Reached',
+                    'description' => "Vehicle has reached " . round($newOdometer) . " km. Scheduled service was at " . $vehicle->next_service_at . " km.",
+                    'status' => 'open',
+                    'priority' => 'high'
+                ]);
+
+                // Reset the service threshold to prevent immediate triggering again
+                $vehicle->update(['next_service_at' => $newOdometer + 5000]);
+
+                event(new \App\Events\IssueCreated($issue));
+            }
+        }
 
         // 5. Run Intelligence Analysis (Risk Engine)
         $this->riskEngine->analyze($log);

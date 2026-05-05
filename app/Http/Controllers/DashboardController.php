@@ -6,6 +6,7 @@ use App\Repositories\VehicleRepository;
 use App\Repositories\TripRepository;
 use App\Repositories\AnomalyRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -32,7 +33,12 @@ class DashboardController extends Controller
         $recentAlerts = $this->anomalyRepo->getRecent(5);
         $trips = $this->tripRepo->getRecent(10);
 
-        return view('dashboard', compact('vehicles', 'recentAlerts', 'trips'));
+        return view('dashboard', [
+            'vehicles' => $vehicles,
+            'recentAlerts' => $recentAlerts,
+            'trips' => $trips,
+            'userSettings' => Auth::user()->settings
+        ]);
     }
 
     /**
