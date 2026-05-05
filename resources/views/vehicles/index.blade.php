@@ -30,8 +30,7 @@
     {{-- Vehicle Grid --}}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @forelse($vehicles as $vehicle)
-        <div class="fleetco-card rounded-[2rem] p-8 flex flex-col gap-6 relative overflow-hidden">
-
+        <x-fleet-card>
             {{-- Header --}}
             <div class="flex items-start justify-between">
                 <div class="flex items-center gap-4">
@@ -44,14 +43,15 @@
                     </div>
                 </div>
 
-                {{-- Status Badge --}}
-                <div class="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border
-                    {{ $vehicle->status === 'active' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
-                       ($vehicle->status === 'idle' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
-                       ($vehicle->status === 'maintenance' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                       'bg-zinc-800 border-zinc-700 text-zinc-500')) }}">
-                    {{ $vehicle->status }}
-                </div>
+                @php
+                    $statusType = [
+                        'active' => 'success',
+                        'idle' => 'warning',
+                        'maintenance' => 'info',
+                        'offline' => 'neutral',
+                    ][$vehicle->status] ?? 'neutral';
+                @endphp
+                <x-badge :type="$statusType">{{ $vehicle->status }}</x-badge>
             </div>
 
             {{-- Stats --}}
@@ -99,11 +99,17 @@
 
             {{-- Actions --}}
             <div class="flex gap-3">
+                <a
+                    :href="`/vehicles/${editVehicle.id || '{{ $vehicle->id }}'}/maintenance`"
+                    class="flex-1 py-3 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-primary/50 hover:text-white transition-all text-center"
+                >
+                    Health & Maintenance
+                </a>
                 <button
                     @click="openEditModal({{ $vehicle->toJson() }}, {{ $vehicle->current_driver_id ?? 'null' }})"
-                    class="flex-1 py-3 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:border-white/30 hover:text-white transition-all"
+                    class="px-4 py-3 border border-white/10 rounded-full text-zinc-400 hover:border-white/30 hover:text-white transition-all"
                 >
-                    Edit Vehicle
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
                 <form method="POST" action="{{ route('vehicles.destroy', $vehicle) }}" onsubmit="return confirm('Remove {{ $vehicle->name }} from the fleet? All tracking data will be lost.')">
                     @csrf
@@ -113,7 +119,7 @@
                     </button>
                 </form>
             </div>
-        </div>
+        </x-fleet-card>
         @empty
         <div class="col-span-3 fleetco-card rounded-[2rem] p-16 text-center">
             <div class="w-20 h-20 rounded-full border border-white/5 flex items-center justify-center mx-auto mb-6 opacity-20">
@@ -126,95 +132,71 @@
     </div>
 
     {{-- ADD VEHICLE MODAL --}}
-    <div
-        x-show="showAddModal"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm"
-        @click.self="showAddModal = false"
-    >
-        <div class="glass-obsidian rounded-[2rem] p-10 w-full max-w-md border border-white/10 shadow-2xl">
-            <div class="text-[10px] text-orange-500 uppercase font-bold tracking-widest mb-2">Fleet Operations</div>
-            <h2 class="font-heading text-2xl font-bold mb-8">Add New Vehicle</h2>
-
-            <form method="POST" action="{{ route('vehicles.store') }}" class="space-y-5">
-                @csrf
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Vehicle Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Delivery Truck Alpha" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">License Plate</label>
-                    <input type="text" name="license_plate" required placeholder="e.g. MH-01-AB-1234" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors uppercase">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Initial Status</label>
-                    <select name="status" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
-                        <option value="offline">Offline</option>
-                        <option value="idle">Idle</option>
-                        <option value="active">Active</option>
-                        <option value="maintenance">Maintenance</option>
-                    </select>
-                </div>
-                <div class="flex gap-4 pt-2">
-                    <button type="button" @click="showAddModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Add to Fleet</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <x-fleet-modal name="showAddModal" title="Add New Vehicle">
+        <form method="POST" action="{{ route('vehicles.store') }}" class="space-y-5">
+            @csrf
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Vehicle Name</label>
+                <input type="text" name="name" required placeholder="e.g. Delivery Truck Alpha" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">License Plate</label>
+                <input type="text" name="license_plate" required placeholder="e.g. MH-01-AB-1234" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors uppercase">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Initial Status</label>
+                <select name="status" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
+                    <option value="offline">Offline</option>
+                    <option value="idle">Idle</option>
+                    <option value="active">Active</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="flex gap-4 pt-2">
+                <button type="button" @click="showAddModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
+                <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Add to Fleet</button>
+            </div>
+        </form>
+    </x-fleet-modal>
 
     {{-- EDIT VEHICLE MODAL --}}
-    <div
-        x-show="showEditModal"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm"
-        @click.self="showEditModal = false"
-    >
-        <div class="glass-obsidian rounded-[2rem] p-10 w-full max-w-md border border-white/10 shadow-2xl">
-            <div class="text-[10px] text-orange-500 uppercase font-bold tracking-widest mb-2">Editing Vehicle</div>
-            <h2 class="font-heading text-2xl font-bold mb-8" x-text="editVehicle.name"></h2>
-
-            <form :action="`/vehicles/${editVehicle.id}`" method="POST" class="space-y-5">
-                @csrf
-                <input type="hidden" name="_method" value="PATCH">
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Vehicle Name</label>
-                    <input type="text" name="name" :value="editVehicle.name" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">License Plate</label>
-                    <input type="text" name="license_plate" :value="editVehicle.license_plate" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors uppercase">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Status</label>
-                    <select name="status" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
-                        <option value="offline" :selected="editVehicle.status === 'offline'">Offline</option>
-                        <option value="idle" :selected="editVehicle.status === 'idle'">Idle</option>
-                        <option value="active" :selected="editVehicle.status === 'active'">Active</option>
-                        <option value="maintenance" :selected="editVehicle.status === 'maintenance'">Maintenance</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Assign Driver</label>
-                    <select name="current_driver_id" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
-                        <option value="">— No driver —</option>
-                        @foreach($unassignedDrivers as $driver)
-                            <option :value="{{ $driver->id }}" :selected="editDriverId == {{ $driver->id }}">{{ $driver->name }}</option>
-                        @endforeach
-                    </select>
-                    <p class="text-[10px] text-zinc-600 mt-2">Only unassigned drivers are shown.</p>
-                </div>
-                <div class="flex gap-4 pt-2">
-                    <button type="button" @click="showEditModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <x-fleet-modal name="showEditModal" title="Edit Vehicle" subtitle="Editing Vehicle">
+        <form :action="`/vehicles/${editVehicle.id}`" method="POST" class="space-y-5">
+            @csrf
+            <input type="hidden" name="_method" value="PATCH">
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Vehicle Name</label>
+                <input type="text" name="name" :value="editVehicle.name" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">License Plate</label>
+                <input type="text" name="license_plate" :value="editVehicle.license_plate" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors uppercase">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Status</label>
+                <select name="status" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
+                    <option value="offline" :selected="editVehicle.status === 'offline'">Offline</option>
+                    <option value="idle" :selected="editVehicle.status === 'idle'">Idle</option>
+                    <option value="active" :selected="editVehicle.status === 'active'">Active</option>
+                    <option value="maintenance" :selected="editVehicle.status === 'maintenance'">Maintenance</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Assign Driver</label>
+                <select name="current_driver_id" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
+                    <option value="">— No driver —</option>
+                    @foreach($unassignedDrivers as $driver)
+                        <option :value="{{ $driver->id }}" :selected="editDriverId == {{ $driver->id }}">{{ $driver->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-zinc-600 mt-2">Only unassigned drivers are shown.</p>
+            </div>
+            <div class="flex gap-4 pt-2">
+                <button type="button" @click="showEditModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
+                <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Save Changes</button>
+            </div>
+        </form>
+    </x-fleet-modal>
 
 </div>
 @endsection

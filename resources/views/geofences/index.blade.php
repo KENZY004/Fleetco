@@ -46,13 +46,18 @@
         {{-- Geofence List / Sidebar --}}
         <div class="w-80 flex flex-col gap-6 shrink-0 overflow-y-auto custom-scrollbar pr-2">
             @forelse($geofences as $gf)
-                <div class="fleetco-card rounded-3xl p-6 relative group">
+                <x-fleet-card class="p-6 relative group">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border
-                            {{ $gf['type'] === 'restricted' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 
-                               ($gf['type'] === 'depot' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-blue-500/10 border-blue-500/30 text-blue-400') }}">
-                            {{ $gf['type'] }}
-                        </div>
+                        @php
+                            $badgeType = [
+                                'restricted' => 'danger',
+                                'depot' => 'success',
+                                'client' => 'info',
+                                'optimized_route' => 'warning',
+                            ][$gf['type']] ?? 'neutral';
+                        @endphp
+                        <x-badge :type="$badgeType">{{ $gf['type'] }}</x-badge>
+
                         <form method="POST" action="{{ route('geofences.destroy', $gf['id']) }}" onsubmit="return confirm('Delete geofence?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="text-zinc-600 hover:text-red-500 transition-colors">
@@ -68,7 +73,7 @@
                             <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Active Tracking</span>
                         </div>
                     </div>
-                </div>
+                </x-fleet-card>
             @empty
                 <div class="p-12 text-center border-2 border-dashed border-white/5 rounded-3xl">
                     <div class="text-[10px] text-zinc-600 uppercase font-bold tracking-widest mb-2">No Zones Defined</div>
@@ -79,41 +84,32 @@
     </div>
 
     {{-- SAVE MODAL --}}
-    <div 
-        x-show="isSaving" 
-        class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-lg"
-        x-transition
-    >
-        <div class="glass-obsidian rounded-[2.5rem] p-10 w-full max-w-md border border-white/10 shadow-2xl">
-            <div class="text-[10px] text-orange-500 uppercase font-bold tracking-widest mb-2">Save Zone Definition</div>
-            <h2 class="font-heading text-2xl font-bold mb-8">Identify this Geofence</h2>
+    <x-fleet-modal name="isSaving" title="Identify this Geofence" subtitle="Save Zone Definition">
+        <form id="saveGeofenceForm" method="POST" action="{{ route('geofences.store') }}" class="space-y-6">
+            @csrf
+            <input type="hidden" name="coordinates" :value="JSON.stringify(points)">
             
-            <form id="saveGeofenceForm" method="POST" action="{{ route('geofences.store') }}" class="space-y-6">
-                @csrf
-                <input type="hidden" name="coordinates" :value="JSON.stringify(points)">
-                
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Zone Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Restricted Warehouse A" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-700 text-sm outline-none focus:border-primary/50 transition-colors">
-                </div>
-                
-                <div>
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Zone Classification</label>
-                    <select name="type" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
-                        <option value="restricted">Restricted (Alert on Entry)</option>
-                        <option value="depot">Fleet Depot (Home Base)</option>
-                        <option value="client">Client Site (Delivery Zone)</option>
-                        <option value="optimized_route">Route Corridor (Alert on Exit)</option>
-                    </select>
-                </div>
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Zone Name</label>
+                <input type="text" name="name" required placeholder="e.g. Restricted Warehouse A" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-700 text-sm outline-none focus:border-primary/50 transition-colors">
+            </div>
+            
+            <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Zone Classification</label>
+                <select name="type" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
+                    <option value="restricted">Restricted (Alert on Entry)</option>
+                    <option value="depot">Fleet Depot (Home Base)</option>
+                    <option value="client">Client Site (Delivery Zone)</option>
+                    <option value="optimized_route">Route Corridor (Alert on Exit)</option>
+                </select>
+            </div>
 
-                <div class="flex gap-4 pt-4">
-                    <button type="button" @click="isSaving = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Finalize Zone</button>
-                </div>
-            </form>
-        </div>
-    </div>
+            <div class="flex gap-4 pt-4">
+                <button type="button" @click="isSaving = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
+                <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Finalize Zone</button>
+            </div>
+        </form>
+    </x-fleet-modal>
 </div>
 @endsection
 

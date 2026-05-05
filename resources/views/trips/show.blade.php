@@ -1,82 +1,158 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="h-[calc(100vh-12rem)] flex flex-col gap-6" x-data="tripReplay()">
-    
+<div class="flex flex-col gap-6 h-[calc(100vh-10rem)]" x-data="tripReplay()" x-init="init()">
+
     {{-- Header --}}
-    <div class="flex items-center justify-between px-2">
-        <div class="flex items-center gap-6">
-            <a href="{{ route('dashboard') }}" class="p-3 bg-white/5 border border-white/10 rounded-2xl text-zinc-500 hover:text-white transition-all">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+        <div class="flex items-center gap-5">
+            <a href="{{ route('trips.index') }}" class="p-3 bg-white/5 border border-white/10 rounded-2xl text-zinc-500 hover:text-white transition-all shrink-0">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <div>
-                <div class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Trip Analysis</div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Mission Replay: {{ $trip->vehicle->name }}</h1>
+                <div class="text-[9px] font-bold text-primary uppercase tracking-widest mb-1">Route Playback</div>
+                <h1 class="font-heading text-2xl font-bold text-white tracking-tight">{{ $trip->vehicle->name }}</h1>
+                <div class="text-xs text-zinc-500 mt-0.5">
+                    {{ $trip->start_time->format('M d, Y · H:i') }}
+                    @if($trip->end_time)
+                        &nbsp;→&nbsp;{{ $trip->end_time->format('H:i') }}
+                    @else
+                        &nbsp;— <span class="text-emerald-400">In Progress</span>
+                    @endif
+                </div>
             </div>
         </div>
-        
-        <div class="flex gap-4">
-            <div class="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
-                <div class="text-[10px] text-zinc-500 uppercase font-bold">Total Distance</div>
-                <div class="text-lg font-bold text-white">{{ number_format($trip->distance, 2) }} KM</div>
+
+        <div class="flex gap-3 shrink-0">
+            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Distance</div>
+                <div class="text-base font-bold text-white">{{ number_format($trip->distance, 2) }} km</div>
             </div>
-            <div class="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
-                <div class="text-[10px] text-zinc-500 uppercase font-bold">Avg Speed</div>
-                <div class="text-lg font-bold text-white">{{ number_format($trip->average_speed, 1) }} KM/H</div>
+            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Avg Speed</div>
+                <div class="text-base font-bold text-white">{{ number_format($trip->average_speed, 1) }} km/h</div>
+            </div>
+            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Pings</div>
+                <div class="text-base font-bold text-white" x-text="logs.length"></div>
+            </div>
+            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Incidents</div>
+                <div class="text-base font-bold {{ count($alerts ?? []) > 0 ? 'text-red-400' : 'text-emerald-400' }}">{{ count($alerts ?? []) }}</div>
             </div>
         </div>
     </div>
 
-    <div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
-        {{-- Map View --}}
-        <div class="col-span-12 lg:col-span-9 fleetco-card rounded-[2.5rem] relative overflow-hidden border border-white/5">
+    {{-- Main Content --}}
+    <div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden min-h-0">
+
+        {{-- Map --}}
+        <div class="col-span-12 lg:col-span-9 relative bg-zinc-950 border border-white/5 rounded-[2rem] overflow-hidden">
             <div id="trip-map" class="absolute inset-0 z-0"></div>
-            
-            {{-- Replay Controls --}}
-            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 px-6 py-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
-                <button @click="togglePlayback()" class="p-3 bg-primary text-black rounded-full hover:scale-105 transition-all shadow-lg">
+
+            {{-- No data overlay --}}
+            <div x-show="logs.length === 0" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4">
+                <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-700">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                </div>
+                <div class="text-zinc-600 text-xs uppercase font-bold tracking-widest">No GPS Data for This Trip</div>
+            </div>
+
+            {{-- Speed HUD --}}
+            <div x-show="logs.length > 0" class="absolute top-6 left-6 z-10 glass-obsidian px-5 py-4 rounded-2xl border border-white/10 pointer-events-none">
+                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Live Speed</div>
+                <div class="font-heading text-2xl font-bold text-white" x-text="currentSpeed + ' km/h'">—</div>
+            </div>
+
+            {{-- Playback Controls --}}
+            <div x-show="logs.length > 0" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-5 px-7 py-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
+
+                {{-- Rewind --}}
+                <button @click="rewind()" class="p-2 text-zinc-500 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+
+                {{-- Play/Pause --}}
+                <button @click="togglePlayback()" class="w-12 h-12 bg-primary text-black rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-lg shadow-primary/20">
                     <template x-if="!isPlaying">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg class="h-5 w-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     </template>
                     <template x-if="isPlaying">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </template>
                 </button>
-                <div class="flex flex-col min-w-[150px]">
-                    <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Playback Progress</div>
-                    <div class="h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div class="h-full bg-primary" :style="'width: ' + progress + '%'"></div>
+
+                {{-- Progress bar --}}
+                <div class="flex flex-col gap-1 min-w-[180px]">
+                    <div class="flex justify-between text-[9px] font-mono text-zinc-500 mb-0.5">
+                        <span x-text="currentTime">—</span>
+                        <span x-text="Math.round(progress) + '%'">0%</span>
+                    </div>
+                    <div class="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer" @click="scrub($event)">
+                        <div class="h-full bg-primary transition-all rounded-full" :style="'width:' + progress + '%'"></div>
                     </div>
                 </div>
-                <div class="text-xs font-mono text-zinc-400" x-text="currentTime"></div>
+
+                {{-- Speed control --}}
+                <select x-model="playSpeed" class="bg-white/10 border-0 rounded-lg px-3 py-2 text-xs text-white font-bold outline-none">
+                    <option value="50">2×</option>
+                    <option value="100" selected>1×</option>
+                    <option value="200">0.5×</option>
+                </select>
             </div>
         </div>
 
         {{-- Incident Ledger --}}
-        <div class="col-span-12 lg:col-span-3 fleetco-card rounded-[2.5rem] overflow-hidden flex flex-col border border-white/5">
-            <div class="p-6 border-b border-white/5 bg-white/[0.02]">
-                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">In-Trip Incidents</h3>
+        <div class="col-span-12 lg:col-span-3 bg-zinc-950 border border-white/5 rounded-[2rem] flex flex-col overflow-hidden">
+            <div class="px-6 py-5 border-b border-white/5 shrink-0">
+                <div class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">In-Trip Incidents</div>
+                @php $alertsData = $alerts ?? []; @endphp
+                @if(count($alertsData) > 0)
+                    <div class="text-xs text-red-400 font-bold mt-1">{{ count($alertsData) }} event{{ count($alertsData) > 1 ? 's' : '' }} detected</div>
+                @endif
             </div>
-            <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                @forelse($alerts as $alert)
-                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/30 transition-all cursor-pointer" @click="jumpToTime('{{ $alert->occurred_at->toIso8601String() }}')">
-                        <div class="flex items-center gap-4 mb-3">
-                            <div class="h-8 w-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                @forelse($alertsData as $alert)
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-red-500/30 transition-all cursor-pointer group"
+                         @click="jumpToTime('{{ $alert['occurred_at'] }}')">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="h-8 w-8 rounded-xl shrink-0 flex items-center justify-center
+                                {{ $alert['type'] === 'speeding' ? 'bg-orange-500/10 text-orange-500' : 'bg-red-500/10 text-red-500' }}">
+                                @if($alert['type'] === 'speeding')
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                @else
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                @endif
                             </div>
-                            <div class="text-xs font-bold text-white uppercase tracking-wider">
-                                {{ $alert->type === 'speeding' ? 'Speeding' : 'Geofence Breach' }}
+                            <div class="text-xs font-bold text-white uppercase tracking-wide">
+                                @switch($alert['type'])
+                                    @case('speeding') Speeding @break
+                                    @case('geofence_breach') Geofence Breach @break
+                                    @case('geofence_entry') Geofence Entry @break
+                                    @default {{ ucwords(str_replace('_', ' ', $alert['type'])) }}
+                                @endswitch
                             </div>
                         </div>
-                        <p class="text-[10px] text-zinc-500 font-medium">
-                            {{ $alert->type === 'speeding' ? 'Detected at ' . $alert->details['speed'] . ' KM/H' : ($alert->details['breach_type'] === 'route_deviation' ? 'Deviated from ' . $alert->details['landmark_name'] : 'Entered Restricted Area') }}
-                        </p>
-                        <div class="mt-3 text-[9px] font-mono text-zinc-600 uppercase">{{ $alert->occurred_at->format('H:i:s') }}</div>
+                        <div class="text-[10px] text-zinc-500">
+                            @if(!empty($alert['details']['speed']))
+                                {{ $alert['details']['speed'] }} km/h detected
+                            @elseif(!empty($alert['details']['landmark_name']))
+                                Zone: {{ $alert['details']['landmark_name'] }}
+                            @endif
+                        </div>
+                        <div class="mt-2 text-[9px] font-mono text-zinc-700 group-hover:text-zinc-500 transition-colors uppercase">
+                            {{ $alert['time'] }}
+                            <span class="text-primary ml-2 opacity-0 group-hover:opacity-100 transition-opacity">→ Jump</span>
+                        </div>
                     </div>
                 @empty
-                    <div class="flex flex-col items-center justify-center py-20 text-center opacity-30">
-                        <svg class="h-8 w-8 text-zinc-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div class="text-[9px] font-bold uppercase tracking-widest">Clean Mission</div>
+                    <div class="flex flex-col items-center justify-center py-16 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-3">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div class="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Clean Mission</div>
+                        <div class="text-zinc-700 text-[10px] mt-1">No incidents recorded</div>
                     </div>
                 @endforelse
             </div>
@@ -85,103 +161,159 @@
 </div>
 
 <script>
-    function tripReplay() {
-        return {
-            map: null,
-            logs: @json($logs),
-            alerts: @json($alerts),
-            currentIndex: 0,
-            isPlaying: false,
-            progress: 0,
-            currentTime: '00:00:00',
-            playbackMarker: null,
-            routePath: null,
+function tripReplay() {
+    return {
+        map: null,
+        logs: @json($logs),
+        currentIndex: 0,
+        isPlaying: false,
+        progress: 0,
+        currentTime: '—',
+        currentSpeed: '—',
+        playbackMarker: null,
+        routePath: null,
+        playbackTimer: null,
+        playSpeed: 100,
 
-            init() {
-                this.map = L.map('trip-map', {
-                    zoomControl: false,
-                    attributionControl: false
-                }).setView([0,0], 2);
+        init() {
+            this.map = L.map('trip-map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([20, 0], 2);
 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19
-                }).addTo(this.map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19
+            }).addTo(this.map);
 
-                const coords = this.logs.map(log => [log.location.coordinates[1], log.location.coordinates[0]]);
-                
-                if (coords.length > 0) {
-                    this.routePath = L.polyline(coords, {
-                        color: '#ff8a00',
-                        weight: 3,
-                        opacity: 0.5,
-                        dashArray: '5, 10'
-                    }).addTo(this.map);
+            if (this.logs.length === 0) return;
 
-                    this.map.fitBounds(this.routePath.getBounds(), { padding: [50, 50] });
+            const coords = this.logs.map(log => [log.lat, log.lng]);
 
-                    // Add markers for alerts
-                    this.alerts.forEach(alert => {
-                        const icon = L.divIcon({
-                            className: 'alert-ping',
-                            html: `<div class="h-3 w-3 bg-red-500 rounded-full border-2 border-white shadow-[0_0_10px_red]"></div>`,
-                            iconSize: [12, 12]
-                        });
-                        L.marker([alert.telematics_log.location.coordinates[1], alert.telematics_log.location.coordinates[0]], { icon })
-                            .addTo(this.map)
-                            .bindTooltip(alert.type.toUpperCase());
-                    });
-                }
-            },
+            // Draw full ghost route
+            this.routePath = L.polyline(coords, {
+                color: '#ff8a00',
+                weight: 3,
+                opacity: 0.25,
+                dashArray: '6, 10'
+            }).addTo(this.map);
 
-            togglePlayback() {
-                this.isPlaying = !this.isPlaying;
-                if (this.isPlaying) this.step();
-            },
+            // Draw completed route (will grow during playback)
+            this.playedPath = L.polyline([], {
+                color: '#ff8a00',
+                weight: 3,
+                opacity: 0.9
+            }).addTo(this.map);
 
-            step() {
-                if (!this.isPlaying || this.currentIndex >= this.logs.length) {
-                    this.isPlaying = false;
-                    return;
-                }
+            this.map.fitBounds(this.routePath.getBounds(), { padding: [60, 60] });
 
-                const log = this.logs[this.currentIndex];
-                const coords = [log.location.coordinates[1], log.location.coordinates[0]];
+            // Start/End markers
+            const startIcon = L.divIcon({
+                className: '',
+                html: `<div style="width:12px;height:12px;background:#22c55e;border:2px solid white;border-radius:50%;box-shadow:0 0 8px rgba(34,197,94,0.6)"></div>`,
+                iconSize: [12, 12], iconAnchor: [6, 6]
+            });
+            const endIcon = L.divIcon({
+                className: '',
+                html: `<div style="width:12px;height:12px;background:#ef4444;border:2px solid white;border-radius:50%;box-shadow:0 0 8px rgba(239,68,68,0.6)"></div>`,
+                iconSize: [12, 12], iconAnchor: [6, 6]
+            });
 
-                if (!this.playbackMarker) {
-                    this.playbackMarker = L.circleMarker(coords, {
-                        radius: 8,
-                        color: '#ff8a00',
-                        fillColor: '#ff8a00',
-                        fillOpacity: 1
-                    }).addTo(this.map);
-                } else {
-                    this.playbackMarker.setLatLng(coords);
-                }
+            L.marker(coords[0], { icon: startIcon }).addTo(this.map).bindTooltip('Start');
+            L.marker(coords[coords.length - 1], { icon: endIcon }).addTo(this.map).bindTooltip('End');
 
-                this.map.panTo(coords);
-                this.progress = (this.currentIndex / this.logs.length) * 100;
-                this.currentTime = new Date(log.captured_at).toLocaleTimeString();
-                
-                this.currentIndex++;
-                setTimeout(() => this.step(), 100);
-            },
+            // Alert markers
+            @foreach($alertsData as $alert)
+                @if($alert['lat'] && $alert['lng'])
+                L.circleMarker([{{ $alert['lat'] }}, {{ $alert['lng'] }}], {
+                    radius: 7,
+                    color: '{{ $alert["type"] === "speeding" ? "#f97316" : "#ef4444" }}',
+                    fillColor: '{{ $alert["type"] === "speeding" ? "#f97316" : "#ef4444" }}',
+                    fillOpacity: 0.9,
+                    weight: 2
+                }).addTo(this.map)
+                 .bindTooltip(`{{ ucwords(str_replace('_', ' ', $alert['type'])) }} · {{ $alert['time'] }}`);
+                @endif
+            @endforeach
+        },
 
-            jumpToTime(isoString) {
-                const targetTime = new Date(isoString).getTime();
-                const index = this.logs.findIndex(log => new Date(log.captured_at).getTime() >= targetTime);
-                if (index !== -1) {
-                    this.currentIndex = index;
-                    this.isPlaying = false;
-                    this.step();
-                }
+        togglePlayback() {
+            if (this.currentIndex >= this.logs.length) {
+                this.currentIndex = 0;
+                this.playedPath?.setLatLngs([]);
+            }
+            this.isPlaying = !this.isPlaying;
+            if (this.isPlaying) this.step();
+        },
+
+        step() {
+            if (!this.isPlaying || this.currentIndex >= this.logs.length) {
+                this.isPlaying = false;
+                return;
+            }
+
+            const log = this.logs[this.currentIndex];
+            const coords = [log.lat, log.lng];
+
+            if (!this.playbackMarker) {
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div style="width:16px;height:16px;background:#ff8a00;border:3px solid white;border-radius:50%;box-shadow:0 0 15px rgba(255,138,0,0.8)"></div>`,
+                    iconSize: [16, 16], iconAnchor: [8, 8]
+                });
+                this.playbackMarker = L.marker(coords, { icon }).addTo(this.map);
+            } else {
+                this.playbackMarker.setLatLng(coords);
+            }
+
+            this.playedPath?.addLatLng(coords);
+            this.map.panTo(coords, { animate: true, duration: 0.2 });
+
+            this.progress = ((this.currentIndex + 1) / this.logs.length) * 100;
+            this.currentTime = log.time;
+            this.currentSpeed = Math.round(log.speed);
+
+            this.currentIndex++;
+            this.playbackTimer = setTimeout(() => this.step(), parseInt(this.playSpeed));
+        },
+
+        rewind() {
+            this.isPlaying = false;
+            clearTimeout(this.playbackTimer);
+            this.currentIndex = 0;
+            this.progress = 0;
+            this.currentTime = '—';
+            this.currentSpeed = '—';
+            this.playedPath?.setLatLngs([]);
+            if (this.playbackMarker && this.logs.length > 0) {
+                this.playbackMarker.setLatLng([this.logs[0].lat, this.logs[0].lng]);
+            }
+        },
+
+        scrub(event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const ratio = (event.clientX - rect.left) / rect.width;
+            this.currentIndex = Math.floor(ratio * this.logs.length);
+            this.progress = ratio * 100;
+            if (this.logs[this.currentIndex]) {
+                this.currentTime = this.logs[this.currentIndex].time;
+                this.currentSpeed = Math.round(this.logs[this.currentIndex].speed);
+            }
+        },
+
+        jumpToTime(isoString) {
+            const target = new Date(isoString).getTime();
+            const idx = this.logs.findIndex(l => new Date(l.captured_at).getTime() >= target);
+            if (idx !== -1) {
+                this.currentIndex = idx;
+                this.isPlaying = false;
+                this.step();
             }
         }
     }
+}
 </script>
 
 <style>
-    .alert-ping {
-        filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.5));
-    }
+    #trip-map .leaflet-control-attribution { display: none; }
 </style>
 @endsection

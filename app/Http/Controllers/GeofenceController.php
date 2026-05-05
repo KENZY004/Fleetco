@@ -37,15 +37,10 @@ class GeofenceController extends Controller
             return back()->withErrors(['coordinates' => 'A geofence needs at least 3 points.']);
         }
 
-        if (DB::getDriverName() === 'sqlite') {
-            // Store as WKT-style JSON for local development
-            $area = json_encode($coords);
-        } else {
-            // Build a proper WKT POLYGON for PostGIS
-            $points = collect($coords)->map(fn($p) => "{$p[1]} {$p[0]}")->join(', ');
-            $first  = "{$coords[0][1]} {$coords[0][0]}";
-            $area   = DB::raw("ST_GeogFromText('POLYGON(({$points}, {$first}))')");
-        }
+        // Build a proper WKT POLYGON for PostGIS
+        $points = collect($coords)->map(fn($p) => "{$p[1]} {$p[0]}")->join(', ');
+        $first  = "{$coords[0][1]} {$coords[0][0]}";
+        $area   = DB::raw("ST_GeogFromText('POLYGON(({$points}, {$first}))')");
 
         Landmark::create([
             'name'     => $request->name,

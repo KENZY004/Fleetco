@@ -12,24 +12,43 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        return Vehicle::with([
-            'driver',
-            'telematicsLogs' => function ($query) {
-                $query->latest('captured_at')->limit(1);
-            }
-        ])->get();
+        return Vehicle::with(['driver', 'latestTelematics'])->get();
     }
 
     /**
      * Find a specific vehicle by ID.
      */
-    public function find(string $id): ?Vehicle
+    public function find(int $id): ?Vehicle
     {
-        return Vehicle::with([
-            'driver',
-            'telematicsLogs' => function ($query) {
-                $query->latest('captured_at')->limit(1);
-            }
-        ])->find($id);
+        return Vehicle::with(['driver', 'latestTelematics'])->find($id);
+    }
+
+    public function create(array $data): Vehicle
+    {
+        return Vehicle::create([
+            'name' => $data['name'],
+            'license_plate' => strtoupper($data['license_plate']),
+            'status' => $data['status'],
+        ]);
+    }
+
+    public function update(Vehicle $vehicle, array $data): bool
+    {
+        if (isset($data['license_plate'])) {
+            $data['license_plate'] = strtoupper($data['license_plate']);
+        }
+        return $vehicle->update($data);
+    }
+
+    public function delete(Vehicle $vehicle): ?bool
+    {
+        return $vehicle->delete();
+    }
+
+    public function unassignDriverFromOthers(int $driverId, int $excludeVehicleId): void
+    {
+        Vehicle::where('current_driver_id', $driverId)
+            ->where('id', '!=', $excludeVehicleId)
+            ->update(['current_driver_id' => null]);
     }
 }

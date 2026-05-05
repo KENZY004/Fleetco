@@ -259,6 +259,9 @@
         box-shadow: none !important;
         padding: 0 !important;
     }
+    .custom-vengo-icon {
+        transition: all 4s linear; /* Smoothly slide over the polling interval */
+    }
     .leaflet-popup-content { margin: 0 !important; }
 </style>
 
@@ -268,6 +271,7 @@
         return {
             map: null,
             markers: {},
+            paths: {}, // Store live paths
             selectedVehicle: null,
             inspectingAlert: null,
             forensicMap: null,
@@ -278,7 +282,7 @@
             vehicles: @json($vehicles),
             geofences: @json($geofences),
             viewportCoords: '00.0000° N, 00.0000° E',
-            haversineDistance: '0.0',
+            haversineDistance: 0,
 
             get filteredVehicles() {
                 return this.vehicles.filter(vehicle => {
@@ -397,19 +401,31 @@
 
             updateMarkers() {
                 this.vehicles.forEach(vehicle => {
-                    if (vehicle.telematics_logs && vehicle.telematics_logs.length > 0) {
-                        const log = vehicle.telematics_logs[0];
+                    if (vehicle.latest_telematics) {
+                        const log = vehicle.latest_telematics;
                         const coords = [log.location.coordinates[1], log.location.coordinates[0]];
 
+                        // 1. Handle the Marker (The Vehicle Dot)
                         if (this.markers[vehicle.id]) {
                             this.markers[vehicle.id].setLatLng(coords);
+                            // Update rotation if heading exists
+                            if (log.heading) {
+                                const iconElement = this.markers[vehicle.id].getElement();
+                                if (iconElement) {
+                                    const inner = iconElement.querySelector('.vehicle-rotation');
+                                    if (inner) inner.style.transform = `rotate(${log.heading}deg)`;
+                                }
+                            }
                         } else {
                             const icon = L.divIcon({
                                 className: 'custom-vengo-icon',
                                 html: `
                                     <div class="relative flex items-center justify-center">
                                         <div class="absolute h-10 w-10 rounded-full bg-primary opacity-10 animate-fleetco-pulse"></div>
-                                        <div class="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_#ff8a00] border border-white/20"></div>
+                                        <div class="vehicle-rotation transition-transform duration-[4000ms] linear" style="transform: rotate(${log.heading || 0}deg)">
+                                            <div class="h-3 w-3 rounded-full bg-primary shadow-[0_0_15px_#ff8a00] border border-white/40"></div>
+                                            <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-white/80 rounded-full"></div>
+                                        </div>
                                     </div>
                                 `,
                                 iconSize: [40, 40],
@@ -423,31 +439,36 @@
                                     direction: 'top',
                                     className: 'fleet-marker-label',
                                     offset: [0, -10]
-                                })
-                                .bindPopup(`
-                                    <div class="p-3 bg-obsidian-900 text-white rounded-xl border border-white/10 min-w-[150px]">
-                                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Vehicle Info</div>
-                                        <div class="text-sm font-bold mb-3">${vehicle.license_plate}</div>
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <div class="text-[8px] text-zinc-500 uppercase font-bold">Speed</div>
-                                                <div class="text-xs font-bold text-primary">${Math.round(log.speed)} km/h</div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[8px] text-zinc-500 uppercase font-bold">Status</div>
-                                                <div class="text-[10px] font-bold text-emerald-400">ACTIVE</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `, {
-                                    className: 'fleet-popup-custom',
-                                    closeButton: false
-                                })
-                                .on('click', () => this.selectVehicle(vehicle));
+                                });
+                        }
+
+                        // 2. Handle the Path (The Trail)
+                        if (!this.paths[vehicle.id]) {
+                            this.paths[vehicle.id] = L.polyline([coords], {
+                                color: '#ff8a00',
+                                weight: 3,
+                                opacity: 0.6,
+                                smoothFactor: 1
+                            }).addTo(this.map);
+                        } else {
+                            const path = this.paths[vehicle.id];
+                            const lastLatLng = path.getLatLngs()[path.getLatLngs().length - 1];
+                            
+                            if (lastLatLng) {
+                                // Calculate distance from last point (in meters)
+                                const dist = this.map.distance(lastLatLng, L.latLng(coords));
+                                
+                                // If jump is > 2km, it's a reset/dirty data. Clear path to avoid "teleport" lines.
+                                if (dist > 2000) {
+                                    path.setLatLngs([coords]);
+                                } else if (dist > 2) { // Only add if moved more than 2 meters
+                                    path.addLatLng(coords);
+                                }
+                            }
                         }
 
                         if (this.isFollowing && this.selectedVehicle?.id === vehicle.id) {
-                            this.map.panTo(coords);
+                            this.map.panTo(coords, { animate: true, duration: 4.0 });
                         }
                     }
                 });
@@ -456,8 +477,8 @@
             selectVehicle(vehicle) {
                 this.selectedVehicle = vehicle;
                 this.isFollowing = true;
-                if (vehicle.telematics_logs && vehicle.telematics_logs.length > 0) {
-                    const log = vehicle.telematics_logs[0];
+                if (vehicle.latest_telematics) {
+                    const log = vehicle.latest_telematics;
                     const coords = [log.location.coordinates[1], log.location.coordinates[0]];
                     
                     this.map.flyTo(coords, 14, { duration: 2.0, easeLinearity: 0.1 });
@@ -477,21 +498,34 @@
                 this.haversineDistance = (R * c).toFixed(2);
             },
 
+            fitFleetBounds() {
+                const group = new L.featureGroup(Object.values(this.markers));
+                if (group.getLayers().length > 0) {
+                    this.map.fitBounds(group.getBounds().pad(0.2));
+                }
+            },
+
             async startPolling() {
+                let firstLoad = true;
                 setInterval(async () => {
-                    if (this.isVisualising) return; // Pause polling during playback for immersion
+                    if (this.isVisualising) return;
                     
                     try {
                         const response = await fetch('/api/vehicles');
                         this.vehicles = await response.json();
                         this.updateMarkers();
                         
+                        if (firstLoad && this.vehicles.length > 0) {
+                            this.fitFleetBounds();
+                            firstLoad = false;
+                        }
+
                         if (this.selectedVehicle) {
                             const updated = this.vehicles.find(v => v.id === this.selectedVehicle.id);
                             if (updated) {
                                 this.selectedVehicle = updated;
-                                if (updated.telematics_logs && updated.telematics_logs.length > 0) {
-                                    this.calculateHaversine([updated.telematics_logs[0].location.coordinates[1], updated.telematics_logs[0].location.coordinates[0]]);
+                                if (updated.latest_telematics) {
+                                    this.calculateHaversine([updated.latest_telematics.location.coordinates[1], updated.latest_telematics.location.coordinates[0]]);
                                 }
                             }
                         }

@@ -4,35 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FleetCo | Drive Tomorrow Today</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Scripts & Styles -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <style>
         body { background-color: #020202; font-family: 'Inter', sans-serif; overflow: hidden; }
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .letter-spacing-tight { letter-spacing: -0.02em; }
-        .glass-obsidian { background: rgba(5, 5, 8, 0.7); backdrop-filter: blur(20px); }
         .hero-image { transform: scale(1.1); filter: brightness(0.6); }
         .speed-gauge { stroke-dasharray: 440; stroke-dashoffset: 440; }
     </style>
 </head>
-<body class="text-white">
+<body class="text-white antialiased">
 
     <!-- Loading Cinematic Interface -->
     <div id="loader" class="fixed inset-0 z-[100] bg-[#020202] flex flex-col items-center justify-center">
         <div class="relative w-[500px] h-[300px] flex items-center justify-center">
             <!-- The Gauge System -->
             <svg class="w-full h-full" viewBox="0 0 200 120">
-                <!-- Background Rail -->
                 <path d="M40 100 A 60 60 0 0 1 160 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12" stroke-dasharray="2.5 1" />
-                
-                <!-- Active Filling Rail -->
                 <path id="gauge-circle" d="M40 100 A 60 60 0 0 1 160 100" fill="none" stroke="#ff8a00" stroke-width="12" stroke-dasharray="2.5 1" class="speed-gauge" />
-                
-                <!-- Inner Ticks -->
                 <path d="M50 100 A 50 50 0 0 1 150 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="1 4.5" />
-
-                <!-- Numbers -->
                 <g class="text-[5px] font-mono fill-zinc-600 font-bold">
                     <text x="35" y="103">1</text>
                     <text x="45" y="75">2</text>
@@ -56,27 +53,25 @@
         <div class="mt-4 flex flex-col items-center">
             <div id="status-text" class="text-[9px] font-mono uppercase tracking-[0.6em] text-zinc-700 mb-4 transition-colors">Establishing Secure Link</div>
             <div class="w-64 h-[1px] bg-white/5 relative overflow-hidden">
-                <div id="loader-bar" class="absolute inset-0 bg-primary w-0 shadow-[0_0_10px_#ff8a00]"></div>
+                <div id="loader-bar" class="absolute inset-0 bg-orange-500 w-0 shadow-[0_0_10px_#ff8a00]"></div>
             </div>
         </div>
     </div>
 
     <!-- Main Hero Cinematic -->
     <main id="hero" class="relative min-h-screen opacity-0 pointer-events-none">
-        <!-- Hero Background -->
         <div class="absolute inset-0 overflow-hidden">
             <img src="/fleet_hub.png" alt="FleetCo Fleet Hub" class="hero-image object-cover w-full h-full">
             <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20"></div>
         </div>
 
-        <!-- Header Nav -->
         <nav class="relative z-10 flex justify-between items-center py-10 px-12">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-[1px] bg-white/20"></div>
                 <span class="text-[10px] uppercase font-black tracking-[0.5em] text-zinc-400">Hub_v.04</span>
             </div>
             <div class="flex items-center gap-3">
-                <div class="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_#ff8a00]"></div>
+                <div class="h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_8px_#ff8a00]"></div>
                 <span class="text-[10px] font-black uppercase tracking-[0.4em]">Live State</span>
             </div>
             <div class="flex items-center gap-6">
@@ -87,17 +82,16 @@
                     </a>
                 @else
                     <a href="{{ route('login') }}" class="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-400 hover:text-white transition-colors">Access_Login</a>
-                    <a href="{{ route('register') }}" class="group relative px-8 py-3 overflow-hidden rounded-full border border-primary/30 active:scale-95 transition-all">
-                        <div class="absolute inset-0 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                    <a href="{{ route('register') }}" class="group relative px-8 py-3 overflow-hidden rounded-full border border-orange-500/30 active:scale-95 transition-all">
+                        <div class="absolute inset-0 bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
                         <span class="relative z-10 text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-white transition-colors duration-500">Register_Node</span>
                     </a>
                 @endauth
             </div>
         </nav>
 
-        <!-- Content Matrix -->
         <div class="relative z-10 flex flex-col items-center justify-center min-h-[70vh] text-center px-6 mt-[-5vh]">
-            <span id="label" class="text-[10px] uppercase tracking-[0.4em] text-primary mb-8 opacity-0 translate-y-4">real-time vehicle intelligence</span>
+            <span id="label" class="text-[10px] uppercase tracking-[0.4em] text-orange-500 mb-8 opacity-0 translate-y-4">real-time vehicle intelligence</span>
             <h1 id="title" class="font-heading text-6xl md:text-[8rem] font-extrabold tracking-tight leading-[0.9] mb-12 opacity-0">
                 FLEET <br>
                 COMMAND
@@ -118,12 +112,12 @@
         <!-- Float Info Matrix -->
         <div class="absolute bottom-16 left-16 grid grid-cols-2 gap-20 z-10">
             <div class="float-card opacity-0 translate-x-4">
-                <div class="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Metric_01</div>
+                <div class="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] mb-4">Metric_01</div>
                 <div class="text-5xl font-black text-white italic tracking-tighter">99.9 <span class="text-xs text-zinc-600 font-bold ml-1 tracking-widest uppercase">%</span></div>
                 <div class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.4em] mt-3 italic">Real-time Location Accuracy</div>
             </div>
             <div class="float-card opacity-0 translate-x-4 border-l border-white/5 pl-20">
-                <div class="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Metric_02</div>
+                <div class="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] mb-4">Metric_02</div>
                 <div class="text-5xl font-black text-white italic tracking-tighter">SECURE</div>
                 <div class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.4em] mt-3 italic">Encrypted Data Transmission</div>
             </div>
@@ -131,7 +125,7 @@
 
         <div class="absolute bottom-16 right-16 text-right z-10 flex flex-col items-end">
             <div class="float-card opacity-0 translate-x-4">
-                <div class="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Fleet_Status</div>
+                <div class="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] mb-4">Fleet_Status</div>
                 <div class="text-5xl font-black text-white italic tracking-tighter">ACTIVE</div>
                 <div class="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.4em] mt-3 italic">Monitoring Global Assets</div>
             </div>
@@ -140,10 +134,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof gsap === 'undefined') return;
+            
             const tl = gsap.timeline();
-            const gaugeLength = 188.5; // Approx length of the semi-circle arc
+            const gaugeLength = 188.5;
 
-            // 1. Initial Loader Animation
             gsap.set("#gauge-circle", { strokeDasharray: gaugeLength, strokeDashoffset: gaugeLength });
 
             tl.to("#gauge-circle", {
@@ -173,7 +168,6 @@
                 ease: "power2.inOut"
             }, 0);
 
-            // 2. Reveal Hero
             tl.to("#loader", {
                 y: "-110%",
                 duration: 1.5,
@@ -193,7 +187,6 @@
                 ease: "power2.out"
             }, "-=0.8");
 
-            // 3. Text & UI Entrance
             tl.to("#label", { opacity: 1, y: 0, duration: 1.5 }, "-=3.5");
             tl.to("#title", { opacity: 1, scale: 1, duration: 2, ease: "expo.out" }, "-=3");
             tl.to("#desc", { opacity: 1, y: 0, duration: 1.5 }, "-=2.5");

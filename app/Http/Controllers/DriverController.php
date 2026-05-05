@@ -4,84 +4,86 @@ namespace App\Http\Controllers;
 
 use App\Models\Driver;
 use App\Models\Vehicle;
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Repositories\DriverRepository;
+use App\Repositories\VehicleRepository;
+use App\Http\Requests\StoreDriverRequest;
+use App\Http\Requests\UpdateDriverRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class DriverController extends Controller
 {
-    public function index()
+    protected $driverRepo;
+    protected $vehicleRepo;
+
+    public function __construct(DriverRepository $driverRepo, VehicleRepository $vehicleRepo)
     {
-        $drivers = Driver::with(['user', 'riskEvents'])->withCount('telematicsLogs')->get();
-        $vehicles = Vehicle::with('driver')->get();
-        $unlinkedUsers = User::whereDoesntHave('driver')->where('role', '!=', 'admin')->get();
+        $this->driverRepo = $driverRepo;
+        $this->vehicleRepo = $vehicleRepo;
+    }
+
+    public function index(): View
+    {
+        $drivers = $this->driverRepo->all();
+        $vehicles = $this->vehicleRepo->getAllWithStatus();
+        $unlinkedUsers = $this->driverRepo->getUnlinkedUsers();
 
         return view('drivers.index', compact('drivers', 'vehicles', 'unlinkedUsers'));
     }
 
-    public function store(Request $request)
+    public function show(Driver $driver): View
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'phone_number' => 'nullable|string|max:20',
-            'license_number' => 'nullable|string|max:50',
-            'user_id' => 'nullable|exists:users,id|unique:drivers,user_id',
-        ]);
+        $driver->load(['vehicle', 'user']);
+        
+        $trips = \App\Models\Trip::with('vehicle')
+            ->where('driver_id', $driver->id)
+            ->latest('start_time')
+            ->limit(10)
+            ->get();
 
-        Driver::create([
-            'name' => $request->name,
-            'phone_number' => $request->phone_number,
-            'license_number' => $request->license_number,
-            'user_id' => $request->user_id ?? null,
-            'risk_score' => 100.00,
-        ]);
+        $alerts = \App\Models\RiskEvent::with('vehicle')
+            ->where('driver_id', $driver->id)
+            ->latest('occurred_at')
+            ->limit(10)
+            ->get();
+
+        return view('drivers.show', compact('driver', 'trips', 'alerts'));
+    }
+
+    public function store(StoreDriverRequest $request): RedirectResponse
+    {
+        $this->driverRepo->create($request->validated());
 
         return redirect()->route('drivers.index')->with('success', 'Driver registered successfully.');
     }
 
-    public function update(Request $request, Driver $driver)
+    public function update(UpdateDriverRequest $request, Driver $driver): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'phone_number' => 'nullable|string|max:20',
-            'license_number' => 'nullable|string|max:50',
-            'user_id' => 'nullable|exists:users,id|unique:drivers,user_id,'. $driver->id,
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-        ]);
+        $this->driverRepo->update($driver, $request->validated());
 
-        $driver->update([
-            'name' => $request->name,
-            'phone_number' => $request->phone_number,
-            'license_number' => $request->license_number,
-            'user_id' => $request->user_id,
-        ]);
-
-        // Handle vehicle assignment
         if ($request->has('vehicle_id')) {
-            // Unassign from previous vehicle
-            Vehicle::where('current_driver_id', $driver->id)->update(['current_driver_id' => null]);
-
+            $this->vehicleRepo->unassignDriverFromOthers($driver->id, $request->vehicle_id ?? 0);
+            
             if ($request->vehicle_id) {
-                Vehicle::find($request->vehicle_id)->update([
-                    'current_driver_id' => $driver->id
-                ]);
+                $vehicle = Vehicle::find($request->vehicle_id);
+                $this->vehicleRepo->update($vehicle, ['current_driver_id' => $driver->id]);
             }
         }
 
         return redirect()->route('drivers.index')->with('success', 'Driver updated successfully.');
     }
 
-    public function destroy(Driver $driver)
+    public function destroy(Driver $driver): RedirectResponse
     {
-        // Unassign from any vehicle first
-        Vehicle::where('current_driver_id', $driver->id)->update(['current_driver_id' => null]);
-        $driver->delete();
+        $this->vehicleRepo->unassignDriverFromOthers($driver->id, 0);
+        $this->driverRepo->delete($driver);
 
         return redirect()->route('drivers.index')->with('success', 'Driver removed from system.');
     }
 
-    public function resetScore(Driver $driver)
+    public function resetScore(Driver $driver): RedirectResponse
     {
-        $driver->update(['risk_score' => 100.00]);
+        $this->driverRepo->update($driver, ['risk_score' => 100.00]);
         return redirect()->route('drivers.index')->with('success', 'Risk score reset to 100.');
     }
 }

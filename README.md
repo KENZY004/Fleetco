@@ -1,25 +1,60 @@
-# 🛰️ Fleetco: Predictive Mobility Intelligence
+# 🚐 Fleetco Telematics Dashboard
 
-Fleetco is an enterprise-grade fleet management platform that transforms raw GPS telemetry into behavioral intelligence. Using a "Zero-Hardware" approach, it treats smartphones as advanced telematics sensors.
+**Fleetco** is a professional, high-fidelity telematics and fleet management SaaS platform. Designed for real-time operational command, it provides deep visibility into vehicle tracking, driver safety, and fleet maintenance.
 
-## 🚀 Deployment Quickstart (Fly.io)
+![Dashboard Preview](https://via.placeholder.com/800x400?text=Fleetco+Operations+Command+Hub)
 
-1. **Install CLI**: `iwr https://fly.io/install.ps1 -useb | iex`
-2. **Init App**: `fly launch` (Enable Postgres + Redis)
-3. **Migrate**: `fly ssh console -C "php artisan migrate --force"`
-4. **Test**: Open your URL, go to `/track-me`, and use token `FLT-FADD69D3`.
+## 🚀 Core Features
 
-## 🧠 Core Features
-- **Heuristic Risk Engine**: Real-time driver scoring based on behavioral patterns.
-- **Spatial Intelligence**: PostGIS-powered geofencing and proximity detection.
-- **Offline Resiliency**: PWA support with IndexedDB queuing and Background Sync.
-- **Bento Dashboard**: High-density operational overview (Laravel 11 + Blade).
+*   **Real-Time Tracking**: High-performance Leaflet-based map with smooth marker interpolation and live breadcrumb pathing.
+*   **Driver Scorecards**: Comprehensive safety analytics, including risk-event tracking, safety score trends, and mission history.
+*   **Trip Replay Engine**: Advanced historical playback with scrub controls, incident jump-navigation, and speed visualization.
+*   **Smart Alerts**: Real-time detection of speeding, geofence breaches, and unauthorized movements.
+*   **Maintenance Hub**: Automatic odometer tracking and service-due prediction based on live trip data.
+*   **Command Center**: Global platform configuration for safety thresholds and company branding.
 
-## 🛠️ Tech Stack
-- **Backend**: Laravel 11 (Monolith)
-- **Database**: PostgreSQL + PostGIS
-- **Frontend**: Blade + Tailwind CSS + Leaflet.js
-- **Real-Time**: Laravel Reverb
+## 🛠️ Technical Stack
+
+*   **Backend**: Laravel 11 (PHP 8.2+)
+*   **Database**: PostgreSQL with **PostGIS** extension for spatial intelligence.
+*   **Frontend**: Alpine.js, Tailwind CSS (Zinc-950 Obsidian Theme).
+*   **Mapping**: Leaflet.js with custom smooth-sliding interpolation.
+*   **Spatial Logic**: Magellan (PostGIS for Laravel).
+
+## 📥 Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/yourusername/fleetco.git
+    cd fleetco
+    ```
+
+2.  **Install dependencies**:
+    ```bash
+    composer install
+    npm install
+    ```
+
+3.  **Environment Setup**:
+    *   Copy `.env.example` to `.env`.
+    *   Configure your PostgreSQL credentials.
+    *   Ensure the **PostGIS** extension is enabled in your database.
+
+4.  **Database Migration**:
+    ```bash
+    php artisan migrate --seed
+    ```
+
+5.  **Start Development Server**:
+    ```bash
+    php artisan serve
+    npm run dev
+    ```
+
+## 🔐 Security & Access
+The platform features Role-Based Access Control (RBAC):
+*   **Admin**: Full access to fleet operations, settings, and maintenance.
+*   **Driver**: Access to the "Mobile Link" Co-Pilot dashboard for shift tracking and self-monitoring.
 
 ---
-*Built for high-performance fleet operations.*
+Built with ❤️ for professional fleet operators.

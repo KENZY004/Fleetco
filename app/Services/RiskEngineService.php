@@ -92,19 +92,14 @@ class RiskEngineService
         $landmarks = Landmark::all();
         $lat = 0; $lng = 0;
 
-        // HANDLE SQLITE STRING LOCATION vs MAGELLAN OBJECT
         $location = $log->location;
-        if (is_string($location) && str_contains($location, 'POINT')) {
-            if (preg_match('/POINT\((.+) (.+)\)/', $location, $matches)) {
-                $lng = (float)$matches[1];
-                $lat = (float)$matches[2];
-            }
-        } elseif ($location instanceof \Clickbar\Magellan\Data\Geometries\Point) {
-            $lat = $location->getLatitude();
-            $lng = $location->getLongitude();
+        if (!($location instanceof \Clickbar\Magellan\Data\Geometries\Point)) {
+            return false;
         }
+        $lat = $location->getLatitude();
+        $lng = $location->getLongitude();
 
-        if ($lat === 0 || $lng === 0) return;
+        if ($lat === 0 || $lng === 0) return false;
 
         $point = [$lat, $lng]; // [lat, lng]
         $cleanDrive = true;

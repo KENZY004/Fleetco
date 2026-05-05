@@ -32,7 +32,7 @@ class TelemetryProcessor
         $log = TelematicsLog::create([
             'vehicle_id' => $vehicle->id,
             'driver_id' => $vehicle->current_driver_id ?? null,
-            'location' => DB::getDriverName() === 'sqlite' ? "POINT({$data['lng']} {$data['lat']})" : $location,
+            'location' => $location,
             'speed' => $data['speed'],
             'heading' => $data['heading'],
             'captured_at' => $data['captured_at'] ?? now(),
@@ -71,6 +71,7 @@ class TelemetryProcessor
         if (!$currentTrip && $log->speed > 0) {
             $currentTrip = Trip::create([
                 'vehicle_id' => $vehicle->id,
+                'driver_id'  => $vehicle->current_driver_id,
                 'start_time' => $log->captured_at,
             ]);
         }
@@ -79,23 +80,11 @@ class TelemetryProcessor
         if ($currentTrip && $lastLog) {
             $distanceKm = 0;
 
-            if (DB::getDriverName() === 'sqlite') {
-                $lat2 = $data['lat'];
-                $lng2 = $data['lng'];
-                
-                $lastLocation = $lastLog->location;
-                if (is_string($lastLocation) && preg_match('/POINT\((.+) (.+)\)/', $lastLocation, $matches)) {
-                    $lng1 = (float)$matches[1];
-                    $lat1 = (float)$matches[2];
-                    // Simple Euclidean approximation for local distance
-                    $distanceKm = sqrt(pow($lat2 - $lat1, 2) + pow($lng2 - $lng1, 2)) * 111.32;
-                }
-            } else {
-                $distance = DB::selectOne("SELECT ST_Distance(?::geography, ?::geography) as distance", [$lastLog->location, $log->location])->distance;
-                $distanceKm = $distance / 1000;
-            }
+            $distance = DB::selectOne("SELECT ST_Distance(?::geography, ?::geography) as distance", [$lastLog->location, $log->location])->distance;
+            $distanceKm = $distance / 1000;
 
             $currentTrip->increment('distance', $distanceKm);
+            $vehicle->increment('odometer', $distanceKm);
             
             $totalTimeHours = $currentTrip->start_time->diffInSeconds($log->captured_at) / 3600;
             if ($totalTimeHours > 0) {
@@ -116,8 +105,8 @@ class TelemetryProcessor
 
     protected function checkSpeeding(Vehicle $vehicle, TelematicsLog $log): void
     {
-        $speedLimit = 5;
-        $threshold = $speedLimit + 1;
+        $speedLimit = \App\Models\Setting::get('speed_limit', 80);
+        $threshold = $speedLimit;
 
         if ($log->speed > $threshold) {
             RiskEvent::create([
@@ -134,10 +123,6 @@ class TelemetryProcessor
 
     protected function checkGeofences(Vehicle $vehicle, TelematicsLog $log): void
     {
-        if (DB::getDriverName() === 'sqlite') {
-            return; 
-        }
-
         $landmarks = Landmark::stWhere(\Clickbar\Magellan\Database\PostgisFunctions\ST::contains('area', $log->location), true)->get();
 
         foreach ($landmarks as $landmark) {

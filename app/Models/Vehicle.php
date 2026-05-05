@@ -6,13 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Vehicle extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'name',
         'license_plate',
         'telemetry_token',
         'status',
+        'odometer',
         'current_driver_id',
     ];
 
@@ -38,6 +42,11 @@ class Vehicle extends Model
     public function latestTelematics(): HasOne
     {
         return $this->hasOne(TelematicsLog::class)->latestOfMany('captured_at');
+    }
+
+    public function maintenanceRecords(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MaintenanceRecord::class);
     }
 
     /**

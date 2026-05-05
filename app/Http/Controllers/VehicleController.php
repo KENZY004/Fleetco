@@ -3,73 +3,62 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
-use App\Models\Driver;
-use Illuminate\Http\Request;
+use App\Repositories\VehicleRepository;
+use App\Repositories\DriverRepository;
+use App\Http\Requests\StoreVehicleRequest;
+use App\Http\Requests\UpdateVehicleRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class VehicleController extends Controller
 {
-    public function index()
+    protected $vehicleRepo;
+    protected $driverRepo;
+
+    public function __construct(VehicleRepository $vehicleRepo, DriverRepository $driverRepo)
     {
-        $vehicles = Vehicle::with(['driver', 'latestTelematics'])->withCount('telematicsLogs')->get();
-        $unassignedDrivers = Driver::whereDoesntHave('vehicle')->get();
+        $this->vehicleRepo = $vehicleRepo;
+        $this->driverRepo = $driverRepo;
+    }
+
+    public function index(): View
+    {
+        $vehicles = $this->vehicleRepo->getAllWithStatus();
+        $unassignedDrivers = $this->driverRepo->getUnassigned();
 
         return view('vehicles.index', compact('vehicles', 'unassignedDrivers'));
     }
 
-    public function store(Request $request)
+    public function store(StoreVehicleRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name'          => 'required|string|max:255',
-            'license_plate' => 'required|string|max:50|unique:vehicles,license_plate',
-            'status'        => 'required|in:active,idle,maintenance,offline',
-        ]);
-
-        Vehicle::create([
-            'name'          => $request->name,
-            'license_plate' => strtoupper($request->license_plate),
-            'status'        => $request->status,
-        ]);
+        $this->vehicleRepo->create($request->validated());
 
         return redirect()->route('vehicles.index')->with('success', 'Vehicle added to fleet.');
     }
 
-    public function update(Request $request, Vehicle $vehicle)
+    public function update(UpdateVehicleRequest $request, Vehicle $vehicle): RedirectResponse
     {
-        $request->validate([
-            'name'              => 'required|string|max:255',
-            'license_plate'     => 'required|string|max:50|unique:vehicles,license_plate,' . $vehicle->id,
-            'status'            => 'required|in:active,idle,maintenance,offline',
-            'current_driver_id' => 'nullable|exists:drivers,id',
-        ]);
-
-        // Unassign driver from any other vehicle first
         if ($request->current_driver_id) {
-            Vehicle::where('current_driver_id', $request->current_driver_id)
-                ->where('id', '!=', $vehicle->id)
-                ->update(['current_driver_id' => null]);
+            $this->vehicleRepo->unassignDriverFromOthers($request->current_driver_id, $vehicle->id);
         }
 
-        $vehicle->update([
-            'name'              => $request->name,
-            'license_plate'     => strtoupper($request->license_plate),
-            'status'            => $request->status,
-            'current_driver_id' => $request->current_driver_id ?? null,
-        ]);
+        $this->vehicleRepo->update($vehicle, $request->validated());
 
         return redirect()->route('vehicles.index')->with('success', 'Vehicle updated successfully.');
     }
 
-    public function destroy(Vehicle $vehicle)
+    public function destroy(Vehicle $vehicle): RedirectResponse
     {
-        $vehicle->delete();
+        $this->vehicleRepo->delete($vehicle);
         return redirect()->route('vehicles.index')->with('success', 'Vehicle removed from fleet.');
     }
 
-    public function regenerateToken(Vehicle $vehicle)
+    public function regenerateToken(Vehicle $vehicle): RedirectResponse
     {
-        $vehicle->update([
+        $this->vehicleRepo->update($vehicle, [
             'telemetry_token' => 'FLT-' . strtoupper(bin2hex(random_bytes(4)))
         ]);
-        return redirect()->route('vehicles.index')->with('success', 'Telemetry token regenerated for ' . $vehicle->name . '. Update your tracking device.');
+        
+        return redirect()->route('vehicles.index')->with('success', 'Telemetry token regenerated for ' . $vehicle->name . '.');
     }
 }

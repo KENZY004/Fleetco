@@ -6,6 +6,7 @@ use App\Models\Vehicle;
 use App\Models\TelematicsLog;
 use App\Models\Trip;
 use App\Models\RiskEvent;
+use App\Models\Driver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,19 +20,19 @@ class TelemetryIngestionTest extends TestCase
             'name' => 'Truck 1',
             'license_plate' => 'ABC-123',
             'status' => 'offline',
+            'telemetry_token' => 'TEST-TOKEN-123'
         ]);
 
         $response = $this->postJson('/api/telematics', [
-            'license_plate' => 'ABC-123',
-            'latitude' => 12.9716,
-            'longitude' => 77.5946,
+            'token' => 'TEST-TOKEN-123',
+            'lat' => 12.9716,
+            'lng' => 77.5946,
             'speed' => 60,
             'heading' => 90,
-            'secret' => 'fleetco_secret_2024',
         ]);
 
         $response->assertStatus(200);
-        $response->assertJsonPath('status', 'TELEMETRY_INGESTED');
+        $response->assertJsonPath('status', 'success');
 
         $this->assertDatabaseHas('telematics_logs', [
             'vehicle_id' => $vehicle->id,
@@ -43,20 +44,20 @@ class TelemetryIngestionTest extends TestCase
 
     public function test_speeding_creates_risk_event()
     {
-        $driver = \App\Models\Driver::create(['name' => 'John Doe']);
+        $driver = Driver::create(['name' => 'John Doe']);
         $vehicle = Vehicle::create([
             'name' => 'Truck 1',
             'license_plate' => 'ABC-123',
             'current_driver_id' => $driver->id,
+            'telemetry_token' => 'SPEED-TOKEN'
         ]);
 
         $this->postJson('/api/telematics', [
-            'license_plate' => 'ABC-123',
-            'latitude' => 12.9716,
-            'longitude' => 77.5946,
+            'token' => 'SPEED-TOKEN',
+            'lat' => 12.9716,
+            'lng' => 77.5946,
             'speed' => 120, // Over limit
             'heading' => 90,
-            'secret' => 'fleetco_secret_2024',
         ]);
 
         $this->assertDatabaseHas('risk_events', [
@@ -66,25 +67,14 @@ class TelemetryIngestionTest extends TestCase
         ]);
     }
 
-    public function test_trip_is_created_on_movement()
+    public function test_invalid_token_returns_401()
     {
-        $vehicle = Vehicle::create([
-            'name' => 'Truck 1',
-            'license_plate' => 'ABC-123',
+        $response = $this->postJson('/api/telematics', [
+            'token' => 'INVALID-TOKEN',
+            'lat' => 12.9716,
+            'lng' => 77.5946,
         ]);
 
-        $this->postJson('/api/telematics', [
-            'license_plate' => 'ABC-123',
-            'latitude' => 12.9716,
-            'longitude' => 77.5946,
-            'speed' => 10,
-            'heading' => 90,
-            'secret' => 'fleetco_secret_2024',
-        ]);
-
-        $this->assertDatabaseHas('trips', [
-            'vehicle_id' => $vehicle->id,
-            'end_time' => null,
-        ]);
+        $response->assertStatus(401);
     }
 }

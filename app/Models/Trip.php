@@ -9,6 +9,7 @@ class Trip extends Model
 {
     protected $fillable = [
         'vehicle_id',
+        'driver_id',
         'start_time',
         'end_time',
         'distance',
@@ -25,5 +26,10 @@ class Trip extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class);
     }
 }

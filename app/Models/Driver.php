@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Driver extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'name',
@@ -48,4 +51,5 @@ class Driver extends Model
     {
         return $this->hasOne(Vehicle::class, 'current_driver_id');
     }
+
 }

@@ -1,3 +1,46 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-[#020202] text-white antialiased;
+        font-family: 'Inter', sans-serif;
+    }
+}
+
+@layer components {
+    .glass-obsidian {
+        @apply bg-black/80 backdrop-blur-2xl border border-white/10;
+    }
+
+    .fleetco-card {
+        @apply bg-white/[0.03] border border-white/[0.06] transition-all duration-300;
+    }
+
+    .fleetco-card:hover {
+        @apply border-orange-500/30 bg-white/[0.04];
+    }
+
+    .text-primary {
+        @apply text-[#ff8a00];
+    }
+
+    .bg-primary {
+        @apply bg-[#ff8a00];
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-white/10 rounded-full;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        @apply bg-orange-500/30;
+    }
+}
