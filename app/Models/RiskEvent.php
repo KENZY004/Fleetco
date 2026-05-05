@@ -15,6 +15,8 @@ class RiskEvent extends Model
         'impact_score',
         'details',
         'occurred_at',
+        'resolved_at',
+        'resolution_note',
     ];
 
     /**
@@ -23,6 +25,7 @@ class RiskEvent extends Model
     protected $casts = [
         'details' => 'array',
         'occurred_at' => 'datetime',
+        'resolved_at' => 'datetime',
     ];
 
     /**

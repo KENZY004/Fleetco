@@ -2,87 +2,172 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleetco | Mobile Tracking</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fleetco | Mobile Uplink</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #020202; color: white; }
-        .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glow-primary { box-shadow: 0 0 40px rgba(255, 138, 0, 0.15); }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #09090b;
+            color: #fafafa;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .glass-card {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            padding: 40px 32px;
+            width: 85%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+
+        .pulse-active {
+            background: #22c55e !important;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        h1 {
+            margin: 0 0 12px 0;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            color: #a1a1aa;
+            margin: 0 0 40px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            color: white;
+            font-size: 18px;
+            margin-bottom: 24px;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        input:focus {
+            border-color: #3b82f6;
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            outline: none;
+        }
+
+        .btn-inactive {
+            background: #fafafa;
+            color: #09090b;
+        }
+
+        .btn-inactive:active {
+            transform: scale(0.98);
+            background: #e4e4e7;
+        }
+
+        .btn-active {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .footer-text {
+            margin-top: 32px;
+            font-size: 12px;
+            color: #52525b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        #error-msg {
+            color: #ef4444;
+            font-size: 14px;
+            margin-top: 16px;
+            display: none;
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 overflow-hidden">
-    <!-- Background -->
-    <div class="fixed inset-0 z-0 pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/5 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]"></div>
-    </div>
+<body>
+    <div class="glass-card">
+        <div class="status-badge">
+            <span id="status-dot" class="pulse" style="background: #52525b;"></span>
+            <span id="status-text">SYSTEM OFFLINE</span>
+        </div>
 
-    <div class="w-full max-w-md relative z-10">
-        <div class="glass rounded-[2.5rem] p-10 text-center relative overflow-hidden">
-            <!-- Header -->
-            <div class="mb-10">
-                <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-4">Tracking Service</div>
-                <h1 class="font-heading text-3xl font-bold tracking-tight mb-2">Mobile Uplink</h1>
-                <p class="text-zinc-500 text-sm font-medium">Transmitting live telemetry to dashboard</p>
-            </div>
+        <h1>Mobile Uplink</h1>
+        <p>Telemetry stream active via Neural Matrix.</p>
 
-            <!-- Status Ring -->
-            <div class="relative w-48 h-48 mx-auto mb-10">
-                <div class="absolute inset-0 rounded-full border-2 border-white/5"></div>
-                <div id="ring-active" class="absolute inset-2 rounded-full border border-orange-500/20 scale-90 opacity-0 transition-all duration-700"></div>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <div id="status-dot" class="w-4 h-4 rounded-full bg-zinc-800 transition-all duration-500"></div>
-                    <div id="status-text" class="text-xs font-bold uppercase tracking-widest mt-4 text-zinc-600">Standby</div>
-                </div>
-            </div>
+        <input type="text" id="uplink-token" placeholder="Uplink Token" autocomplete="off" spellcheck="false">
+        
+        <button id="toggle-btn" class="btn-action btn-inactive" onclick="toggleTracking()">
+            Initialize Uplink
+        </button>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 gap-4 mb-10">
-                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
-                    <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1 text-left">Latitude</div>
-                    <div id="lat" class="font-medium text-sm text-left text-white">--.----</div>
-                </div>
-                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
-                    <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1 text-left">Longitude</div>
-                    <div id="lng" class="font-medium text-sm text-left text-white">--.----</div>
-                </div>
-            </div>
+        <div id="error-msg"></div>
 
-            <!-- Controls -->
-            <div class="space-y-6">
-                <button 
-                    id="toggle-btn"
-                    onclick="toggleTracking()"
-                    class="w-full py-5 bg-white text-black rounded-2xl font-bold text-sm transition-all active:scale-95 shadow-xl shadow-white/5"
-                >
-                    Initialize Uplink
-                </button>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="relative">
-                        <label class="absolute -top-2.5 left-4 bg-[#020202] px-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Vehicle Name</label>
-                        <input 
-                            type="text" 
-                            id="vehicle-name" 
-                            placeholder="e.g. Truck 01"
-                            class="w-full bg-transparent border border-white/10 rounded-xl py-4 px-4 text-center text-xs font-bold tracking-wider focus:border-orange-500 outline-none text-white transition-colors"
-                        >
-                    </div>
-                    <div class="relative">
-                        <label class="absolute -top-2.5 left-4 bg-[#020202] px-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Plate/ID</label>
-                        <input 
-                            type="text" 
-                            id="license-plate" 
-                            placeholder="Unit ID (e.g. 01)"
-                            class="w-full bg-transparent border border-white/10 rounded-xl py-4 px-4 text-center text-xs font-bold tracking-wider focus:border-orange-500 outline-none uppercase text-white transition-colors"
-                            value=""
-                        >
-                    </div>
-                </div>
-            </div>
+        <div class="footer-text">
+            PostGIS Encryption Enabled
         </div>
     </div>
 
@@ -90,51 +175,67 @@
         let isTracking = false;
         let watchId = null;
         let lastPing = 0;
-        const secret = 'fleetco_secret_2024';
+        let wakeLock = null;
 
-        function toggleTracking() {
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(console.error);
+            });
+        }
+
+        async function toggleTracking() {
             const btn = document.getElementById('toggle-btn');
             const dot = document.getElementById('status-dot');
             const text = document.getElementById('status-text');
-            const ring = document.getElementById('ring-active');
+            const tokenInput = document.getElementById('uplink-token');
+            const errorMsg = document.getElementById('error-msg');
 
             if (!isTracking) {
-                if ("geolocation" in navigator) {
-                    isTracking = true;
-                    btn.innerHTML = "Terminate Uplink";
-                    btn.classList.replace('bg-white', 'bg-zinc-900');
-                    btn.classList.add('text-white', 'border', 'border-white/10');
-                    
-                    dot.classList.replace('bg-zinc-800', 'bg-orange-500');
-                    dot.classList.add('animate-pulse', 'glow-primary');
-                    
-                    ring.classList.replace('opacity-0', 'opacity-100');
-                    ring.classList.add('scale-100', 'animate-pulse');
+                if (!tokenInput.value) {
+                    errorMsg.innerText = "Please enter your token";
+                    errorMsg.style.display = "block";
+                    return;
+                }
+                errorMsg.style.display = "none";
 
-                    text.innerHTML = "Transmitting";
-                    text.classList.replace('text-zinc-600', 'text-white');
+                if ("geolocation" in navigator) {
+                    try {
+                        if ('wakeLock' in navigator) {
+                            wakeLock = await navigator.wakeLock.request('screen');
+                        }
+                    } catch (err) {
+                        console.warn('Wake Lock failed:', err);
+                    }
+
+                    isTracking = true;
+                    btn.innerText = "Terminate Uplink";
+                    btn.classList.replace('btn-inactive', 'btn-active');
+                    dot.classList.add('pulse-active');
+                    text.innerText = "STREAMING ACTIVE";
+                    tokenInput.disabled = true;
 
                     watchId = navigator.geolocation.watchPosition(
-                        (position) => {
-                            const { latitude, longitude, speed, heading } = position.coords;
-                            document.getElementById('lat').innerText = latitude.toFixed(6);
-                            document.getElementById('lng').innerText = longitude.toFixed(6);
-
+                        (pos) => {
                             const now = Date.now();
                             if (now - lastPing > 3000) {
-                                sendTelemetry(latitude, longitude, speed, heading);
+                                sendTelemetry(
+                                    pos.coords.latitude, 
+                                    pos.coords.longitude, 
+                                    pos.coords.speed, 
+                                    pos.coords.heading
+                                );
                                 lastPing = now;
                             }
                         },
-                        (error) => {
-                            console.error(error);
-                            alert("GPS Error: " + error.message);
+                        (err) => {
+                            console.error(err);
                             stopTracking();
+                            errorMsg.innerText = "GPS Error: " + err.message;
+                            errorMsg.style.display = "block";
                         },
-                        { enableHighAccuracy: true }
+                        { enableHighAccuracy: true, maximumAge: 0 }
                     );
-                } else {
-                    alert("Geolocation not supported.");
                 }
             } else {
                 stopTracking();
@@ -145,47 +246,50 @@
             isTracking = false;
             if (watchId) navigator.geolocation.clearWatch(watchId);
             
+            if (wakeLock) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+            
             const btn = document.getElementById('toggle-btn');
             const dot = document.getElementById('status-dot');
             const text = document.getElementById('status-text');
-            const ring = document.getElementById('ring-active');
+            const tokenInput = document.getElementById('uplink-token');
 
-            btn.innerHTML = "Initialize Uplink";
-            btn.classList.replace('bg-zinc-900', 'bg-white');
-            btn.classList.remove('text-white', 'border', 'border-white/10');
-            
-            dot.classList.replace('bg-orange-500', 'bg-zinc-800');
-            dot.classList.remove('animate-pulse', 'glow-primary');
-            
-            ring.classList.replace('opacity-100', 'opacity-0');
-            ring.classList.remove('scale-100', 'animate-pulse');
-
-            text.innerHTML = "Standby";
-            text.classList.replace('text-white', 'text-zinc-600');
+            btn.innerText = "Initialize Uplink";
+            btn.classList.replace('btn-active', 'btn-inactive');
+            dot.classList.remove('pulse-active');
+            text.innerText = "SYSTEM OFFLINE";
+            tokenInput.disabled = false;
         }
 
         async function sendTelemetry(lat, lng, speed, heading) {
-            const plate = document.getElementById('license-plate').value;
-            const name = document.getElementById('vehicle-name').value;
-
-            if (!plate) return; // Don't send if no ID provided
+            const token = document.getElementById('uplink-token').value;
             
+            const payload = {
+                token: token,
+                lat: lat,
+                lng: lng,
+                speed: speed || 0,
+                heading: heading || 0
+            };
+
             try {
                 const response = await fetch('/api/telematics', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        license_plate: plate,
-                        vehicle_name: name,
-                        latitude: lat,
-                        longitude: lng,
-                        speed: speed || 0,
-                        heading: heading || 0,
-                        secret: secret
-                    })
+                    body: JSON.stringify(payload)
                 });
+
+                if (!response.ok && navigator.serviceWorker.controller) {
+                    throw new Error('Offline');
+                }
             } catch (error) {
-                console.error('Network Error:', error);
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'QUEUE_TELEMETRY',
+                        payload: payload
+                    });
+                }
             }
         }
     </script>

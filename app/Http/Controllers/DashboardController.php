@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Repositories\VehicleRepository;
 use App\Repositories\TripRepository;
 use App\Repositories\AnomalyRepository;
+use App\Models\RiskEvent;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -35,8 +36,9 @@ class DashboardController extends Controller
         $recentAlerts = $this->anomalyRepo->getRecent(5);
         $trips = $this->tripRepo->getRecent(10);
         $stats = $this->analyticsService->getDashboardStats();
+        $geofences = \App\Models\Landmark::all();
 
-        return view('dashboard', compact('vehicles', 'recentAlerts', 'trips', 'stats'));
+        return view('dashboard', compact('vehicles', 'recentAlerts', 'trips', 'stats', 'geofences'));
     }
 
     /**
@@ -47,5 +49,28 @@ class DashboardController extends Controller
         return response()->json(
             $this->vehicleRepo->getAllWithStatus()
         );
+    }
+
+    /**
+     * API for live security alerts.
+     */
+    public function getSecurityAlerts()
+    {
+        $alerts = RiskEvent::with(['vehicle', 'driver', 'telematicsLog'])
+            ->whereNull('resolved_at')
+            ->latest('occurred_at')
+            ->limit(10)
+            ->get();
+
+        return response()->json($alerts);
+    }
+
+    public function resolveAlert(Request $request, RiskEvent $alert)
+    {
+        $alert->update([
+            'resolved_at' => now(),
+            'resolution_note' => $request->note ?? 'No note provided'
+        ]);
+        return response()->json(['success' => true]);
     }
 }

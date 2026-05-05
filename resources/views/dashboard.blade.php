@@ -64,13 +64,13 @@
                 <div class="grid grid-cols-2 gap-8 mb-10">
                     <div class="p-6 rounded-2xl bg-white/5">
                         <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Driver Safety Score</div>
-                        <div class="font-heading text-3xl font-bold text-white tracking-tight">92<span class="text-primary text-sm ml-1">%</span></div>
+                        <div class="font-heading text-3xl font-bold text-white tracking-tight" x-text="selectedVehicle?.driver?.risk_score ? Math.round(selectedVehicle.driver.risk_score) : '—'"></div>
                     </div>
                     <div class="p-6 rounded-2xl bg-white/5">
                         <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-[0.2em] mb-2">Status</div>
                         <div class="flex items-center gap-2 mt-1">
-                            <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                            <span class="text-xs font-bold text-white uppercase tracking-widest" x-text="selectedVehicle?.latest_log ? 'Tracking Active' : 'Offline'"></span>
+                            <div class="h-2 w-2 rounded-full" :class="(selectedVehicle?.telematics_logs?.length > 0) ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-800'"></div>
+                            <span class="text-xs font-bold text-white uppercase tracking-widest" x-text="(selectedVehicle?.telematics_logs?.length > 0) ? 'Tracking Active' : 'Offline'"></span>
                         </div>
                     </div>
                 </div>
@@ -146,8 +146,121 @@
             <x-trip-history :trips="$trips" />
         </div>
 
+    {{-- FORENSIC INCIDENT MODAL --}}
+    <div 
+        x-show="inspectingAlert" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+        @click.self="inspectingAlert = null"
+    >
+        <div class="glass-obsidian rounded-[3rem] w-full max-w-4xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex h-[700px]">
+            {{-- Left Side: Forensic Map --}}
+            <div class="w-1/2 relative bg-zinc-900 border-r border-white/5">
+                <div id="forensic-map" class="absolute inset-0" style="height: 700px; background: #09090b;"></div>
+                <div class="absolute top-8 left-8 z-[1001] px-4 py-2 bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-2xl">
+                    Breach Location
+                </div>
+            </div>
+
+            {{-- Right Side: Data Deep-Dive --}}
+            <div class="w-1/2 p-12 flex flex-col gap-8 bg-obsidian-950/50">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-[10px] text-red-500 font-bold uppercase tracking-[0.2em] mb-2">Forensic Analysis</div>
+                        <h2 class="text-3xl font-bold text-white tracking-tight" x-text="formatType(inspectingAlert?.type, inspectingAlert?.details)"></h2>
+                    </div>
+                    <button @click="inspectingAlert = null" class="p-3 text-zinc-500 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5">
+                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-2">Driver Impact</div>
+                        <div class="text-2xl font-bold text-red-500" x-text="'-' + inspectingAlert?.impact_score + ' PTS'"></div>
+                    </div>
+                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5">
+                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-2">Occurred At</div>
+                        <div class="text-sm font-mono text-white" x-text="inspectingAlert ? new Date(inspectingAlert.occurred_at).toLocaleTimeString() : ''"></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 space-y-6">
+                    <div class="flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Involved Operator</div>
+                            <div class="text-white font-bold" x-text="inspectingAlert?.driver?.name"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.01]">
+                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-3">Telemetry Snapshot</div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-zinc-500 font-medium">Recorded Speed</span>
+                                <span class="text-white font-bold" x-text="(inspectingAlert?.details?.speed || '0') + ' KM/H'"></span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-zinc-500 font-medium">Violation Type</span>
+                                <span class="text-white font-bold italic" x-text="inspectingAlert?.details?.breach_type || 'Point Breach'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-2xl border border-white/5 bg-white/[0.01] space-y-4">
+                    <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Resolution Audit Note</div>
+                    <textarea 
+                        x-model="resolutionNote" 
+                        placeholder="Why is this case being closed? (e.g. Authorized detour)" 
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-700 outline-none focus:border-primary/50 transition-all h-24 resize-none"
+                    ></textarea>
+                </div>
+
+                <div class="mt-auto flex gap-4 pt-6">
+                    <template x-if="inspectingAlert?.driver?.phone_number">
+                        <a :href="'tel:' + inspectingAlert.driver.phone_number" class="flex-1 py-5 bg-emerald-500 text-black text-center rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20">
+                            Initiate Contact
+                        </a>
+                    </template>
+                    <button 
+                        @click="dismissAlert(inspectingAlert.id, resolutionNote); inspectingAlert = null; resolutionNote = '';" 
+                        class="flex-1 py-5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-all hover:bg-white/5"
+                    >
+                        Finalize & Resolve
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+
+<style>
+    .leaflet-tooltip-pane { z-index: 1000 !important; }
+    .fleet-marker-label {
+        background: rgba(9, 9, 11, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 4px !important;
+        padding: 2px 6px !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.05em !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+    }
+    .leaflet-tooltip-top:before { border-top-color: rgba(9, 9, 11, 0.9) !important; }
+    
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    .leaflet-popup-content { margin: 0 !important; }
+</style>
 
 @push('scripts')
 <script>
@@ -156,9 +269,29 @@
             map: null,
             markers: {},
             selectedVehicle: null,
+            inspectingAlert: null,
+            forensicMap: null,
+            forensicMarker: null,
+            searchQuery: '',
+            statusFilter: 'all',
+            resolutionNote: '',
             vehicles: @json($vehicles),
+            geofences: @json($geofences),
             viewportCoords: '00.0000° N, 00.0000° E',
             haversineDistance: '0.0',
+
+            get filteredVehicles() {
+                return this.vehicles.filter(vehicle => {
+                    const matchesSearch = vehicle.license_plate.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                          (vehicle.current_driver?.name || '').toLowerCase().includes(this.searchQuery.toLowerCase());
+                    
+                    const matchesStatus = this.statusFilter === 'all' || 
+                                         (this.statusFilter === 'moving' && vehicle.status === 'moving') ||
+                                         (this.statusFilter === 'alerting' && vehicle.status === 'alerting');
+
+                    return matchesSearch && matchesStatus;
+                });
+            },
             
             // Playback State
             playbackPolyline: null,
@@ -172,6 +305,42 @@
                 this.$nextTick(() => {
                     this.initMap();
                     this.startPolling();
+                    
+                    // Request notification permission
+                    if ("Notification" in window && Notification.permission === "default") {
+                        Notification.requestPermission();
+                    }
+
+                    window.addEventListener('inspect-alert', (e) => {
+                        this.openInspectModal(e.detail);
+                    });
+
+                    // Listen for new alerts to show notifications
+                    window.addEventListener('new-alert-detected', (e) => {
+                        const alert = e.detail;
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            new Notification(`FLEET ALERT: ${this.formatType(alert.type, alert.details)}`, {
+                                body: `Vehicle ${alert.vehicle?.license_plate || 'Unknown'} - ${alert.driver?.name || 'Unknown'}`,
+                                icon: '/favicon.ico'
+                            }).onclick = () => {
+                                window.focus();
+                                this.selectVehicle(alert.vehicle);
+                                this.openInspectModal(alert);
+                            };
+                        }
+                    });
+
+                    // Check for URL parameters (Inspect button support)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const vehicleId = urlParams.get('vehicle');
+                    if (vehicleId) {
+                        setTimeout(() => {
+                            const vehicle = this.vehicles.find(v => v.id == vehicleId);
+                            if (vehicle) {
+                                this.selectVehicle(vehicle);
+                            }
+                        }, 1000);
+                    }
                 });
             },
 
@@ -199,6 +368,31 @@
                 });
 
                 this.updateMarkers();
+                this.renderGeofences();
+            },
+
+            renderGeofences() {
+                this.geofences.forEach(gf => {
+                    let coords = [];
+                    
+                    // Decode logic based on DB storage
+                    if (typeof gf.area === 'string') {
+                        coords = JSON.parse(gf.area);
+                    } else if (gf.area && gf.area.coordinates) {
+                        // PostGIS format [lng, lat] to Leaflet [lat, lng]
+                        coords = gf.area.coordinates[0].map(p => [p[1], p[0]]);
+                    }
+
+                    if (coords.length > 0) {
+                        const color = gf.type === 'restricted' ? '#f43f5e' : (gf.type === 'depot' ? '#10b981' : '#3b82f6');
+                        L.polygon(coords, {
+                            color: color,
+                            weight: 1,
+                            fillOpacity: 0.1,
+                            dashArray: gf.type === 'restricted' ? '5, 5' : null
+                        }).addTo(this.map).bindTooltip(gf.name);
+                    }
+                });
             },
 
             updateMarkers() {
@@ -224,6 +418,31 @@
 
                             this.markers[vehicle.id] = L.marker(coords, { icon })
                                 .addTo(this.map)
+                                .bindTooltip(vehicle.license_plate, {
+                                    permanent: true,
+                                    direction: 'top',
+                                    className: 'fleet-marker-label',
+                                    offset: [0, -10]
+                                })
+                                .bindPopup(`
+                                    <div class="p-3 bg-obsidian-900 text-white rounded-xl border border-white/10 min-w-[150px]">
+                                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Vehicle Info</div>
+                                        <div class="text-sm font-bold mb-3">${vehicle.license_plate}</div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="text-[8px] text-zinc-500 uppercase font-bold">Speed</div>
+                                                <div class="text-xs font-bold text-primary">${Math.round(log.speed)} km/h</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-[8px] text-zinc-500 uppercase font-bold">Status</div>
+                                                <div class="text-[10px] font-bold text-emerald-400">ACTIVE</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `, {
+                                    className: 'fleet-popup-custom',
+                                    closeButton: false
+                                })
                                 .on('click', () => this.selectVehicle(vehicle));
                         }
 
@@ -363,6 +582,106 @@
                 }
                 this.playbackPath = [];
                 this.playbackIndex = 0;
+            },
+
+            openInspectModal(alert) {
+                this.inspectingAlert = alert;
+                // Force a small delay to ensure modal is fully rendered
+                setTimeout(() => {
+                    this.initForensicMap(alert);
+                }, 300);
+            },
+
+            formatType(type, details) {
+                if (!type) return 'Incident';
+                const label = type.replace(/_/g, ' ').toUpperCase();
+                if (details && details.breach_type) {
+                    return `${label}: ${details.breach_type}`;
+                }
+                return label;
+            },
+
+            dismissAlert(id, note = null) {
+                fetch(`/api/alerts/${id}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ note: note })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh alerts (using global event)
+                        window.dispatchEvent(new CustomEvent('refresh-alerts'));
+                    }
+                });
+            },
+
+            initForensicMap(alert) {
+                if (this.forensicMap) {
+                    this.forensicMap.remove();
+                }
+
+                setTimeout(() => {
+                    this.forensicMap = L.map('forensic-map', {
+                        zoomControl: false,
+                        attributionControl: false
+                    });
+
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(this.forensicMap);
+
+                    // Calibration: Support both telematics_log and telematicsLog naming
+                    const log = alert.telematics_log || alert.telematicsLog;
+
+                    if (log && log.location) {
+                        let lat, lng;
+
+                        // HANDLE SQLITE STRING FORMAT: "POINT(lng lat)"
+                        if (typeof log.location === 'string' && log.location.includes('POINT')) {
+                            const match = log.location.match(/POINT\((.+) (.+)\)/);
+                            if (match) {
+                                lng = parseFloat(match[1]);
+                                lat = parseFloat(match[2]);
+                            }
+                        } 
+                        // HANDLE POSTGRES OBJECT FORMAT
+                        else if (log.location.coordinates) {
+                            lng = log.location.coordinates[0];
+                            lat = log.location.coordinates[1];
+                        }
+
+                        if (lat && lng) {
+                            const coords = [lat, lng];
+                            this.forensicMap.setView(coords, 16);
+                            
+                            // High-visibility 'Dossier' Target
+                            L.circle(coords, {
+                                radius: 40,
+                                color: '#ff4444',
+                                fillColor: '#ff4444',
+                                fillOpacity: 0.1,
+                                weight: 1
+                            }).addTo(this.forensicMap);
+
+                            L.circleMarker(coords, {
+                                radius: 6,
+                                color: '#ffffff',
+                                fillColor: '#ff4444',
+                                fillOpacity: 1,
+                                weight: 2
+                            }).addTo(this.forensicMap);
+                        } else {
+                            this.forensicMap.setView([31.3831, 75.3857], 12);
+                        }
+                    } else {
+                        // Fallback: Show Kapurthala, Punjab area if log is missing
+                        this.forensicMap.setView([31.3831, 75.3857], 12);
+                    }
+                    
+                    this.forensicMap.invalidateSize();
+                }, 400);
             }
         }
     }

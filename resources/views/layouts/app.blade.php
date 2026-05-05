@@ -47,6 +47,9 @@
             
             <div class="hidden md:flex gap-8">
                 <a href="{{ route('dashboard') }}" class="text-sm font-medium {{ request()->routeIs('dashboard') ? 'text-white' : 'text-zinc-500 hover:text-white' }} transition-colors">Dashboard</a>
+                <a href="{{ route('drivers.index') }}" class="text-sm font-medium {{ request()->routeIs('drivers.*') ? 'text-white' : 'text-zinc-500 hover:text-white' }} transition-colors">Drivers</a>
+                <a href="{{ route('vehicles.index') }}" class="text-sm font-medium {{ request()->routeIs('vehicles.*') ? 'text-white' : 'text-zinc-500 hover:text-white' }} transition-colors">Vehicles</a>
+                <a href="{{ route('geofences.index') }}" class="text-sm font-medium {{ request()->routeIs('geofences.*') ? 'text-white' : 'text-zinc-500 hover:text-white' }} transition-colors">Geofences</a>
                 <a href="/track-me" class="text-sm font-medium {{ request()->url() == url('/track-me') ? 'text-white' : 'text-zinc-500 hover:text-white' }} transition-colors">Mobile Link</a>
             </div>
         </div>

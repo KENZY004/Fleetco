@@ -24,38 +24,25 @@ class TelematicsController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'license_plate' => 'required|string',
-            'vehicle_name' => 'nullable|string', // Dynamic name
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'token' => 'required|string',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
             'speed' => 'nullable|numeric',
             'heading' => 'nullable|numeric',
-            'secret' => 'required|string'
         ]);
 
-        if ($request->secret !== 'fleetco_secret_2024') {
-            return response()->json(['error' => 'Invalid Uplink Secret'], 401);
-        }
+        // 1. Find the vehicle by its telemetry token
+        $vehicle = Vehicle::where('telemetry_token', $request->token)->first();
 
-        // 1. Find or Create the vehicle dynamically
-        $vehicle = Vehicle::firstOrCreate(
-            ['license_plate' => strtoupper($request->license_plate)],
-            [
-                'name' => $request->vehicle_name ?? ('Unit ' . $request->license_plate), 
-                'status' => 'active'
-            ]
-        );
-
-        // Update name if it's provided and different
-        if ($request->vehicle_name && $vehicle->name !== $request->vehicle_name) {
-            $vehicle->update(['name' => $request->vehicle_name]);
+        if (!$vehicle) {
+            return response()->json(['error' => 'UNAUTHORIZED_UPLINK', 'message' => 'Invalid Telemetry Token'], 401);
         }
 
         // 2. Process Telemetry using Service
         try {
             $log = $this->processor->process($vehicle, [
-                'lat' => $request->latitude,
-                'lng' => $request->longitude,
+                'lat' => $request->lat,
+                'lng' => $request->lng,
                 'speed' => $request->speed ?? 0,
                 'heading' => $request->heading ?? 0,
                 'captured_at' => now(),
@@ -67,6 +54,11 @@ class TelematicsController extends Controller
                 'log_id' => $log->id
             ]);
         } catch (\Exception $e) {
+            \Log::error('Telematics Processing Failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'payload' => $request->all()
+            ]);
+            
             return response()->json([
                 'error' => 'PROCESSING_FAILED',
                 'message' => $e->getMessage()

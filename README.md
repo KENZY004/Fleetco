@@ -1,56 +1,25 @@
-# Fleetco | Operations Command Hub
+# 🛰️ Fleetco: Predictive Mobility Intelligence
 
-![FleetCo Banner](/fleet_hub.png)
+Fleetco is an enterprise-grade fleet management platform that transforms raw GPS telemetry into behavioral intelligence. Using a "Zero-Hardware" approach, it treats smartphones as advanced telematics sensors.
 
-## 🌌 Overview
-Fleetco is an enterprise-grade **Predictive Mobility Intelligence** platform. It transforms raw telematics into a high-fidelity "Operations Command Hub," providing real-time oversight for complex vehicle fleets.
+## 🚀 Deployment Quickstart (Fly.io)
+
+1. **Install CLI**: `iwr https://fly.io/install.ps1 -useb | iex`
+2. **Init App**: `fly launch` (Enable Postgres + Redis)
+3. **Migrate**: `fly ssh console -C "php artisan migrate --force"`
+4. **Test**: Open your URL, go to `/track-me`, and use token `FLT-FADD69D3`.
+
+## 🧠 Core Features
+- **Heuristic Risk Engine**: Real-time driver scoring based on behavioral patterns.
+- **Spatial Intelligence**: PostGIS-powered geofencing and proximity detection.
+- **Offline Resiliency**: PWA support with IndexedDB queuing and Background Sync.
+- **Bento Dashboard**: High-density operational overview (Laravel 11 + Blade).
 
 ## 🛠️ Tech Stack
-- **Engine:** Laravel 11 (Monolith)
-- **Intelligence:** PostGIS + Heuristic Risk Engine
-- **Interface:** Blade Components + Tailwind CSS + GSAP
-- **Mapping:** Leaflet.js (Dark Mode)
-
-## 📜 Master Directive
-This project is governed by a strict architectural directive focused on high-velocity delivery, behavioral analytics, and "Zero-Hardware" PWA capabilities.
-
-**[Read the Full Master Directive](MASTER_DIRECTIVE.md)**
-
-## 🚀 Key Features
-- **Neural Spatial Matrix:** Real-time PostGIS-backed tracking.
-- **Heuristic Risk Scoring:** AI-driven driver behavior analysis.
-- **Mission Visualization:** Historical path playback and spatial analysis.
-- **Command Hub UI:** Cinematic, map-centric "Bento" dashboard.
+- **Backend**: Laravel 11 (Monolith)
+- **Database**: PostgreSQL + PostGIS
+- **Frontend**: Blade + Tailwind CSS + Leaflet.js
+- **Real-Time**: Laravel Reverb
 
 ---
-
-## 💻 Local Development
-
-**Prerequisites:** PHP 8.2+, Composer, PostgreSQL + PostGIS.
-
-1. **Clone & Install:**
-   ```bash
-   composer install
-   npm install
-   ```
-
-2. **Environment Setup:**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-
-3. **Database Migration:**
-   ```bash
-   php artisan migrate --seed
-   ```
-
-4. **Launch:**
-   ```bash
-   php artisan serve
-   npm run dev
-   ```
-
----
-
-*Built with precision for Fleet Managers and System Architects.*
+*Built for high-performance fleet operations.*

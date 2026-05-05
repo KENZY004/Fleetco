@@ -13,11 +13,19 @@ use Carbon\Carbon;
 
 class TelemetryProcessor
 {
+    protected $riskEngine;
+
+    public function __construct(RiskEngineService $riskEngine)
+    {
+        $this->riskEngine = $riskEngine;
+    }
+
     /**
      * Process incoming telemetry data for a vehicle.
      */
     public function process(Vehicle $vehicle, array $data): TelematicsLog
     {
+        \Illuminate\Support\Facades\Log::info("Telemetry: Processing ping for Vehicle {$vehicle->license_plate}");
         // 1. Create the Telematics Log
         $location = Point::makeGeodetic($data['lat'], $data['lng']);
         
@@ -34,13 +42,13 @@ class TelemetryProcessor
         $vehicle->updateStatusFromTelemetry($data['speed']);
 
         // 3. Handle Trip Logic
-        $this->handleTrip($vehicle, $log);
+        $this->handleTrip($vehicle, $log, $data);
 
-        // 4. Check for Speeding Alert
-        $this->checkSpeeding($vehicle, $log);
+        // 4. Analyze Behavioral Risk (Speeding, Geofencing, etc.)
+        $this->riskEngine->analyze($log);
 
-        // 5. Check for Geofence Alerts
-        $this->checkGeofences($vehicle, $log);
+        // 5. Broadcast for Real-Time Dashboard
+        event(new \App\Events\TelematicsReceived($log));
 
         return $log;
     }
@@ -48,7 +56,7 @@ class TelemetryProcessor
     /**
      * Manage trips for the vehicle.
      */
-    protected function handleTrip(Vehicle $vehicle, TelematicsLog $log): void
+    protected function handleTrip(Vehicle $vehicle, TelematicsLog $log, array $data): void
     {
         $lastLog = $vehicle->telematicsLogs()
             ->where('id', '!=', $log->id)
@@ -72,41 +80,23 @@ class TelemetryProcessor
             $distanceKm = 0;
 
             if (DB::getDriverName() === 'sqlite') {
-                // Parse location from WKT if needed, or just use the log attributes
-                // On SQLite, we saved it as WKT string.
-                // For simplicity, we can assume the Point object can be reconstructed or we use lat/lng from the log if they were columns.
-                // But we only have 'location' as text.
+                $lat2 = $data['lat'];
+                $lng2 = $data['lng'];
                 
-                // Let's assume we can get lat/lng from the Point object we just created if it's the current log,
-                // and for the last log we parse the WKT.
-                
-                $lat2 = $log->location instanceof Point ? $log->location->getLatitude() : 0; // This might be tricky if it was saved as string
-                // Actually, $log->location might be a string now.
-                
-                // Let's just use the $data lat/lng for the current log
-                $lat2 = $data['lat'] ?? 0;
-                $lng2 = $data['lng'] ?? 0;
-                
-                // For last log, we parse WKT: POINT(lng lat)
                 $lastLocation = $lastLog->location;
                 if (is_string($lastLocation) && preg_match('/POINT\((.+) (.+)\)/', $lastLocation, $matches)) {
-                    $lng1 = $matches[1];
-                    $lat1 = $matches[2];
+                    $lng1 = (float)$matches[1];
+                    $lat1 = (float)$matches[2];
+                    // Simple Euclidean approximation for local distance
                     $distanceKm = sqrt(pow($lat2 - $lat1, 2) + pow($lng2 - $lng1, 2)) * 111.32;
                 }
             } else {
-                // Calculate distance in meters using PostGIS (SRID 4326 is geodetic, distance is in meters)
-                $distance = DB::selectOne("SELECT ST_Distance(
-                    ?::geography, 
-                    ?::geography
-                ) as distance", [$lastLog->location, $log->location])->distance;
-
+                $distance = DB::selectOne("SELECT ST_Distance(?::geography, ?::geography) as distance", [$lastLog->location, $log->location])->distance;
                 $distanceKm = $distance / 1000;
             }
 
             $currentTrip->increment('distance', $distanceKm);
             
-            // Simple average speed update (total distance / total time)
             $totalTimeHours = $currentTrip->start_time->diffInSeconds($log->captured_at) / 3600;
             if ($totalTimeHours > 0) {
                 $currentTrip->update([
@@ -115,23 +105,21 @@ class TelemetryProcessor
             }
         }
 
-        // 3. Detect Trip End (Idle for > 15 mins)
+        // 3. Detect Trip End (Idle for > 2 mins for testing)
         if ($currentTrip && $lastLog) {
             $idleDuration = $lastLog->captured_at->diffInMinutes($log->captured_at);
-            if ($idleDuration > 15 && $log->speed == 0) {
+            if ($idleDuration > 2 && $log->speed == 0) {
                 $currentTrip->update(['end_time' => $log->captured_at]);
             }
         }
     }
 
-    /**
-     * Check if the vehicle is exceeding the speed limit.
-     */
     protected function checkSpeeding(Vehicle $vehicle, TelematicsLog $log): void
     {
-        $speedLimit = 100; // Hardcoded for now, can be dynamic later
+        $speedLimit = 5;
+        $threshold = $speedLimit + 1;
 
-        if ($log->speed > $speedLimit) {
+        if ($log->speed > $threshold) {
             RiskEvent::create([
                 'vehicle_id' => $vehicle->id,
                 'driver_id' => $log->driver_id,
@@ -144,27 +132,21 @@ class TelemetryProcessor
         }
     }
 
-    /**
-     * Check if the vehicle has entered or exited any geofences.
-     */
     protected function checkGeofences(Vehicle $vehicle, TelematicsLog $log): void
     {
         if (DB::getDriverName() === 'sqlite') {
-            return; // Skip spatial check on SQLite for now
+            return; 
         }
 
-        // Use Magellan stWhere macro to find landmarks containing this point
         $landmarks = Landmark::stWhere(\Clickbar\Magellan\Database\PostgisFunctions\ST::contains('area', $log->location), true)->get();
 
         foreach ($landmarks as $landmark) {
-            // Check if we already have a recent 'geofence_entry' for this landmark and vehicle
-            // to avoid spamming alerts. This is a simplified version.
             RiskEvent::create([
                 'vehicle_id' => $vehicle->id,
                 'driver_id' => $log->driver_id,
                 'telematics_log_id' => $log->id,
                 'type' => 'geofence_entry',
-                'impact_score' => 0, // Not necessarily negative
+                'impact_score' => 0,
                 'details' => ['landmark_id' => $landmark->id, 'landmark_name' => $landmark->name],
                 'occurred_at' => $log->captured_at,
             ]);

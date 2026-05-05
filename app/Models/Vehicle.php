@@ -11,6 +11,7 @@ class Vehicle extends Model
     protected $fillable = [
         'name',
         'license_plate',
+        'telemetry_token',
         'status',
         'current_driver_id',
     ];
@@ -57,5 +58,18 @@ class Vehicle extends Model
         if ($this->status !== $newStatus) {
             $this->update(['status' => $newStatus]);
         }
+    }
+    /**
+     * Boot the model to auto-generate tokens.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($vehicle) {
+            if (empty($vehicle->telemetry_token)) {
+                $vehicle->telemetry_token = 'FLT-' . strtoupper(bin2hex(random_bytes(4)));
+            }
+        });
     }
 }

@@ -12,9 +12,12 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        return Vehicle::with(['telematicsLogs' => function ($query) {
-            $query->latest('captured_at')->limit(1);
-        }])->get();
+        return Vehicle::with([
+            'driver',
+            'telematicsLogs' => function ($query) {
+                $query->latest('captured_at')->limit(1);
+            }
+        ])->get();
     }
 
     /**
@@ -22,8 +25,11 @@ class VehicleRepository
      */
     public function find(string $id): ?Vehicle
     {
-        return Vehicle::with(['telematicsLogs' => function ($query) {
-            $query->latest('captured_at')->limit(1);
-        }])->find($id);
+        return Vehicle::with([
+            'driver',
+            'telematicsLogs' => function ($query) {
+                $query->latest('captured_at')->limit(1);
+            }
+        ])->find($id);
     }
 }

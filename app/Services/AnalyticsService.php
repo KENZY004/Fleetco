@@ -38,10 +38,10 @@ class AnalyticsService
      */
     public function getActiveVehiclesCount(): int
     {
-        $fiveMinutesAgo = Carbon::now()->subMinutes(5);
+        $activeWindow = Carbon::now()->subMinutes(2);
         
-        return Vehicle::whereHas('telematicsLogs', function ($query) use ($fiveMinutesAgo) {
-            $query->where('captured_at', '>=', $fiveMinutesAgo);
+        return Vehicle::whereHas('telematicsLogs', function ($query) use ($activeWindow) {
+            $query->where('captured_at', '>=', $activeWindow);
         })->count();
     }
 

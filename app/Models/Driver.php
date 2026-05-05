@@ -11,7 +11,10 @@ class Driver extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'phone_number',
+        'license_number',
         'risk_score',
+        'clean_pings_count',
     ];
 
     /**
@@ -36,5 +39,13 @@ class Driver extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the vehicle currently assigned to this driver.
+     */
+    public function vehicle(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Vehicle::class, 'current_driver_id');
     }
 }

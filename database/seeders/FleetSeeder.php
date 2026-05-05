@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Vehicle;
-use App\Models\Driver;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -12,28 +10,19 @@ class FleetSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create Admin User
-        User::create([
-            'first_name' => 'Fleet',
-            'last_name' => 'Commander',
-            'name' => 'Fleet Commander',
-            'email' => 'admin@fleetco.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-        ]);
-
-        // 2. Create Base Drivers
-        $drivers = [
-            ['name' => 'Sarah Connor', 'risk_score' => 100.0],
-            ['name' => 'Max Rockatansky', 'risk_score' => 100.0],
-        ];
-
-        foreach ($drivers as $d) {
-            Driver::create($d);
+        // Create initial Admin user (only if not already exists)
+        if (!User::where('email', 'admin@fleetco.com')->exists()) {
+            User::create([
+                'first_name' => 'Fleet',
+                'last_name'  => 'Commander',
+                'name'       => 'Fleet Commander',
+                'email'      => 'admin@fleetco.com',
+                'password'   => Hash::make('password'),
+                'role'       => 'admin',
+            ]);
         }
 
-        // NOTE: No vehicles are pre-created.
-        // Vehicles will be automatically created in the database 
-        // the moment a driver starts transmitting from the tracking page.
+        // All drivers, vehicles, and other data are created dynamically
+        // through the admin UI — no dummy data is seeded.
     }
 }

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\TelematicsController;
 
 use App\Http\Controllers\Api\PlaybackController;
 
+use App\Http\Controllers\DashboardController;
+
 Route::get('/health', function () {
     return response()->json(['status' => 'ok']);
 });
