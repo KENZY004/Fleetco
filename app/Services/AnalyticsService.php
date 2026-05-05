@@ -38,11 +38,12 @@ class AnalyticsService
      */
     public function getActiveVehiclesCount(): int
     {
-        $activeWindow = Carbon::now()->subMinutes(2);
+        $timeout = Carbon::now()->subSeconds(30);
         
-        return Vehicle::whereHas('telematicsLogs', function ($query) use ($activeWindow) {
-            $query->where('captured_at', '>=', $activeWindow);
-        })->count();
+        return Vehicle::where('status', '!=', 'offline')
+            ->whereHas('telematicsLogs', function ($query) use ($timeout) {
+                $query->where('captured_at', '>=', $timeout);
+            })->count();
     }
 
     /**

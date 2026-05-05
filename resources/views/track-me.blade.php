@@ -366,11 +366,11 @@
                     { enableHighAccuracy: true, maximumAge: 0 }
                 );
             } else {
-                stopTracking();
+                await stopTracking();
             }
         }
 
-        function stopTracking() {
+        async function stopTracking() {
             isTracking = false;
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
             if (wakeLock) { wakeLock.release().then(() => { wakeLock = null; }); }
@@ -385,6 +385,20 @@
             dot.classList.remove('active');
             text.innerText = "System Offline";
             tokenInput.disabled = false;
+
+            // Notify server that we are going offline
+            const token = tokenInput.value.trim();
+            if (token) {
+                try {
+                    await fetch('/api/telematics/stop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token })
+                    });
+                } catch (e) {
+                    console.error("Failed to notify server of disconnect", e);
+                }
+            }
         }
 
         async function sendTelemetry(lat, lng, speed, heading) {

@@ -63,13 +63,22 @@ class GeofenceController extends Controller
      */
     private function decodeArea($area): array
     {
+        if (is_array($area)) return $area;
+
         if (is_string($area)) {
-            // SQLite: stored as JSON
             $decoded = json_decode($area, true);
-            return $decoded ?? [];
+            if ($decoded) return $decoded;
         }
 
-        // PostGIS geometry object — extract coordinates
+        // If it's a PostGIS object from Clickbar/Magellan
+        if ($area instanceof \Clickbar\Magellan\Data\Geometries\Polygon) {
+            $lineStrings = $area->getLineStrings();
+            if (empty($lineStrings)) return [];
+            
+            $points = $lineStrings[0]->getPoints();
+            return array_map(fn($p) => [$p->getLatitude(), $p->getLongitude()], $points);
+        }
+
         return [];
     }
 }

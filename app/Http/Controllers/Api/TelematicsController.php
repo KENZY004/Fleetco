@@ -65,4 +65,29 @@ class TelematicsController extends Controller
             ], 500);
         }
     }
+
+    public function stop(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        $vehicle = Vehicle::where('telemetry_token', $request->token)->first();
+
+        if (!$vehicle) {
+            return response()->json(['error' => 'UNAUTHORIZED_UPLINK'], 401);
+        }
+
+        // Set status to offline
+        $vehicle->update(['status' => 'offline']);
+
+        // Broadcast a final "offline" status so the dashboard updates instantly
+        // We create a dummy log just for the broadcast event if needed, 
+        // but the easiest is just to broadcast a generic event.
+        event(new \App\Events\TelematicsReceived(
+            $vehicle->telematicsLogs()->latest('captured_at')->first()
+        ));
+
+        return response()->json(['status' => 'disconnected']);
+    }
 }

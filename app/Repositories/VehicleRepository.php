@@ -12,7 +12,17 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        return Vehicle::with(['driver', 'latestTelematics'])->get();
+        $vehicles = Vehicle::with(['driver', 'latestTelematics'])->get();
+        $timeout = \Carbon\Carbon::now()->subSeconds(45);
+
+        // Map through vehicles and force status to offline if they are stale
+        $vehicles->each(function ($vehicle) use ($timeout) {
+            if ($vehicle->status !== 'offline' && (!$vehicle->latestTelematics || $vehicle->latestTelematics->captured_at->lt($timeout))) {
+                $vehicle->status = 'offline';
+            }
+        });
+
+        return $vehicles;
     }
 
     /**

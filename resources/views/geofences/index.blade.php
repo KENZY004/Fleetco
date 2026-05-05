@@ -158,12 +158,13 @@
             },
 
             addPoint(lat, lng) {
+                console.log('Adding Point:', lat, lng);
                 this.points.push([lat, lng]);
                 
                 // Add marker
                 const marker = L.circleMarker([lat, lng], {
-                    radius: 5,
-                    color: '#ff8a00',
+                    radius: 6,
+                    color: '#fff',
                     fillColor: '#ff8a00',
                     fillOpacity: 1,
                     weight: 2
@@ -176,7 +177,7 @@
                     this.polygon = L.polygon(this.points, {
                         color: '#ff8a00',
                         weight: 3,
-                        fillOpacity: 0.2,
+                        fillOpacity: 0.3,
                         dashArray: '5, 10'
                     }).addTo(this.map);
                 }

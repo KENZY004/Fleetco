@@ -62,9 +62,10 @@ class Vehicle extends Model
      */
     public function updateStatusFromTelemetry(float $speed): void
     {
-        $newStatus = $speed > 0 ? 'active' : 'idle';
+        // If we are getting pings, the vehicle is definitely NOT offline
+        $newStatus = $speed > 1 ? 'active' : 'idle';
         
-        if ($this->status !== $newStatus) {
+        if ($this->status === 'offline' || $this->status !== $newStatus) {
             $this->update(['status' => $newStatus]);
         }
     }

@@ -20,4 +20,5 @@ Route::get('/health', function () {
 });
 
 Route::post('/telematics', [TelematicsController::class, 'store'])->middleware('throttle:telematics');
+Route::post('/telematics/stop', [TelematicsController::class, 'stop'])->middleware('throttle:telematics');
 Route::get('/vehicles/{vehicle}/playback', [PlaybackController::class, 'getHistory']);
