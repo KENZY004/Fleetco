@@ -13,7 +13,7 @@
         .glass-obsidian { background: rgba(8, 8, 12, 0.8); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col items-center justify-center p-6">
+<body class="antialiased min-h-screen flex flex-col items-center justify-center py-12 px-6">
     <!-- Background Accents -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/5 rounded-full blur-[120px]"></div>
