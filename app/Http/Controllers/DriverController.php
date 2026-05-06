@@ -10,6 +10,8 @@ use App\Http\Requests\StoreDriverRequest;
 use App\Http\Requests\UpdateDriverRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeDriver;
 
 class DriverController extends Controller
 {
@@ -52,9 +54,18 @@ class DriverController extends Controller
 
     public function store(StoreDriverRequest $request): RedirectResponse
     {
-        $this->driverRepo->create($request->validated());
+        $driver = $this->driverRepo->create($request->validated());
 
-        return redirect()->route('drivers.index')->with('success', 'Driver registered successfully.');
+        // Trigger Welcome Email if a user account is linked
+        if ($driver->user_id && $driver->user) {
+            try {
+                Mail::to($driver->user->email)->send(new WelcomeDriver($driver->name));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send welcome email to driver: " . $e->getMessage());
+            }
+        }
+
+        return redirect()->route('drivers.index')->with('success', 'Driver registered successfully. Welcome email dispatched.');
     }
 
     public function update(UpdateDriverRequest $request, Driver $driver): RedirectResponse

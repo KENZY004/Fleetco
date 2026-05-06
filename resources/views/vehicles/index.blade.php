@@ -4,7 +4,7 @@
 <div class="space-y-8" x-data="vehicleManager()">
 
     {{-- Page Header --}}
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Fleet Operations</div>
             <h1 class="font-heading text-3xl font-bold tracking-tight">Vehicle Management</h1>

@@ -4,7 +4,7 @@
 <div class="h-[calc(100vh-140px)] flex flex-col gap-6" x-data="geofenceBuilder()">
     
     {{-- Page Header --}}
-    <div class="flex items-center justify-between shrink-0">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Spatial Intelligence</div>
             <h1 class="font-heading text-3xl font-bold tracking-tight">Geofence Builder</h1>

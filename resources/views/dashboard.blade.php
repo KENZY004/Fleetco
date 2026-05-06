@@ -1,150 +1,129 @@
 @extends('layouts.app')
 
+@section('main-class', '')
+
 @section('content')
 <div 
-    class="space-y-8 h-full flex flex-col" 
+    class="relative h-screen w-full overflow-hidden" 
     x-data="fleetDashboard()"
     x-init="init()"
 >
-    <!-- Stats Overview -->
-    <x-stats-overview :stats="$stats ?? []" />
-
-    <!-- Main Bento Matrix -->
-    <div class="grid grid-cols-12 gap-8 flex-1 min-h-0">
-        
-        <!-- Hero Map Interface -->
-        <div class="col-span-12 lg:col-span-8 lg:row-span-8 relative min-h-[500px] bg-obsidian-900 border border-border rounded-[2rem] overflow-hidden group shadow-2xl">
-            <!-- Map Overlay: HUD -->
-            <div class="absolute top-8 left-8 z-[1000] glass-obsidian p-5 rounded-2xl border border-white/10 pointer-events-none">
-                <div class="text-[10px] text-orange-500 uppercase font-bold tracking-wider mb-2">Real-time Map Data</div>
-                <div class="font-heading text-lg font-bold text-white tracking-tight mb-1" x-text="viewportCoords"></div>
+    <!-- 1. FULL SCREEN BASE MAP -->
+    <div id="map" class="absolute inset-0 z-0"></div>
+    <!-- 2. TOP HUD: Real-time Stats -->
+    <div class="absolute top-4 md:top-6 left-4 md:left-6 right-4 md:right-6 z-[1000] pointer-events-none">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-6">
+            <!-- Left Side: Map Info -->
+            <div class="glass-obsidian p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/10 pointer-events-auto shadow-2xl">
+                <div class="text-[8px] md:text-[10px] text-orange-500 uppercase font-bold tracking-wider mb-1 md:mb-2">Ops Intelligence</div>
+                <div class="font-heading text-sm md:text-xl font-bold text-white tracking-tight mb-1" x-text="viewportCoords"></div>
                 <div class="flex items-center gap-2">
-                    <div class="h-1 w-1 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">System Status: Online</span>
+                    <div class="h-1 w-1 md:h-1.5 md:w-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span class="text-[8px] md:text-[9px] font-bold text-zinc-500 uppercase tracking-widest" x-text="'System: ' + systemStatus"></span>
                 </div>
             </div>
 
-            <!-- Leaflet Map -->
-            <div id="map" class="absolute inset-0 z-0 opacity-80 group-hover:opacity-100 transition-opacity duration-700"></div>
-
-            <!-- Side HUD: Telemetry -->
-            <div class="absolute bottom-8 right-8 z-[1000] glass-obsidian p-6 rounded-2xl w-56 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 border border-white/10">
-                <h4 class="text-[10px] font-bold mb-4 uppercase text-zinc-500 tracking-wider">Map Legend</h4>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                        <span class="text-zinc-400">Vehicle Route</span>
-                        <div class="w-8 h-1 bg-primary rounded-full shadow-[0_0_8px_#ff8a00]"></div>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                        <span class="text-zinc-400">Heat Points</span>
-                        <div class="w-8 h-1 bg-white/20 rounded-full"></div>
-                    </div>
-                </div>
+            <!-- Center/Right: Live Stats Matrix -->
+            <div class="flex-1 pointer-events-auto">
+                <x-stats-overview :stats="$stats ?? []" />
             </div>
         </div>
+    </div>
 
-        <!-- Heuristic Deviations Feed -->
-        <div class="col-span-12 lg:col-span-4 lg:row-span-7 fleetco-card rounded-[2rem] overflow-hidden">
-            <x-anomaly-feed :anomalies="$recentAlerts" />
-        </div>
-
-        <!-- Selection Intelligent Profile -->
-        <div class="col-span-12 lg:col-span-4 lg:row-span-5 fleetco-card p-10 flex flex-col rounded-[2rem] relative overflow-hidden">
-            <div x-show="selectedVehicle" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-4">
-                <div class="flex items-center gap-6 mb-10">
-                    <div class="h-16 w-16 rounded-2xl bg-white/5 border border-border flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Vehicle Details</div>
-                        <h3 class="font-heading text-2xl font-bold text-white tracking-tight" x-text="selectedVehicle?.license_plate"></h3>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-8 mb-10">
-                    <div class="p-6 rounded-2xl bg-white/5">
-                        <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Driver Safety Score</div>
-                        <div class="font-heading text-3xl font-bold text-white tracking-tight" x-text="selectedVehicle?.driver?.risk_score ? Math.round(selectedVehicle.driver.risk_score) : '—'"></div>
-                    </div>
-                    <div class="p-6 rounded-2xl bg-white/5">
-                        <div class="text-[10px] text-zinc-500 uppercase font-bold tracking-[0.2em] mb-2">Status</div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div class="h-2 w-2 rounded-full" :class="(selectedVehicle?.telematics_logs?.length > 0) ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-800'"></div>
-                            <span class="text-xs font-bold text-white uppercase tracking-widest" x-text="(selectedVehicle?.telematics_logs?.length > 0) ? 'Tracking Active' : 'Offline'"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-6 rounded-2xl border border-border font-mono text-[11px] mb-10">
-                    <div class="text-zinc-500 uppercase font-bold text-[9px] mb-4 tracking-wider">Location Intelligence</div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-zinc-500">CENTROID_DIST</span>
-                            <span class="text-white font-bold" x-text="haversineDistance + ' KM'"></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-zinc-500">LATENCY</span>
-                            <span class="text-emerald-400 font-bold uppercase tracking-widest">Optimized</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-4">
-                    <button 
-                        @click="visualiseMission()"
-                        class="flex-1 py-5 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95"
-                    >
-                        Replay Route
-                    </button>
-                    <button 
-                        class="px-6 py-5 border border-white/10 rounded-full text-zinc-500 hover:text-white transition-colors"
-                        @click="selectedVehicle = null; clearPlayback();"
-                    >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
+    <!-- 3. LEFT HUD: Fleet Matrix -->
+    <div 
+        class="hidden md:flex absolute top-44 left-6 bottom-10 w-72 z-[1000] pointer-events-auto flex-col gap-4"
+        :class="isFleetListOpen ? '!flex fixed inset-0 w-full h-full z-[5000] top-0 left-0 p-4 bg-black/90 backdrop-blur-xl' : ''"
+        x-show="isFleetListOpen || !isMobile"
+    >
+        <div class="glass-obsidian rounded-[2rem] border border-white/10 overflow-hidden flex flex-col flex-1 shadow-2xl relative">
+            <button @click="isFleetListOpen = false" class="md:hidden absolute top-4 right-4 p-2 text-zinc-500 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="py-5 px-8 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Live Fleet</span>
+                <span class="text-[9px] font-bold px-2 py-1 bg-primary/20 text-primary uppercase rounded" x-text="vehicles.length"></span>
             </div>
-
-            <div x-show="!selectedVehicle" class="h-full flex flex-col items-center justify-center text-center p-12">
-                <div class="w-20 h-20 rounded-full border border-white/5 flex items-center justify-center mb-8 opacity-20">
-                    <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-                </div>
-                <h4 class="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Select a vehicle to view data</h4>
-            </div>
-        </div>
-
-        <!-- Vehicle Fleet Matrix -->
-        <div class="col-span-12 lg:col-span-3 lg:row-span-4 fleetco-card rounded-[2rem] overflow-hidden flex flex-col">
-            <div class="py-6 px-8 border-b border-border bg-obsidian-900/50 flex justify-between items-center">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Fleet List</span>
-                <span class="text-[9px] font-bold px-2 py-1 bg-white/5 text-white uppercase" x-text="vehicles.length + ' Units'"></span>
-            </div>
+            
             <div class="flex-1 overflow-y-auto custom-scrollbar">
-                <div class="divide-y divide-border">
+                <div class="divide-y divide-white/5">
                     <template x-for="vehicle in vehicles" :key="vehicle.id">
                         <div 
-                            @click="selectVehicle(vehicle)"
-                            class="p-6 hover:bg-white/5 cursor-pointer transition-all flex items-center gap-5"
-                            :class="selectedVehicle?.id == vehicle.id ? 'bg-white/5 border-l-4 border-primary' : ''"
+                            @click="selectVehicle(vehicle); if(isMobile) isFleetListOpen = false;"
+                            class="p-6 hover:bg-white/5 cursor-pointer transition-all flex items-center gap-5 group/item"
+                            :class="selectedVehicle?.id == vehicle.id ? 'bg-primary/10' : ''"
                         >
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-sm font-bold text-white tracking-tight truncate" x-text="vehicle.name"></h4>
+                                <h4 class="text-sm font-bold text-white tracking-tight truncate group-hover/item:text-primary transition-colors" x-text="vehicle.name"></h4>
                                 <span class="text-[10px] font-medium text-zinc-600 tracking-tight" x-text="vehicle.license_plate"></span>
                             </div>
                             <div 
-                                class="h-1.5 w-1.5 rounded-full"
-                                :class="vehicle.latest_log ? 'bg-primary shadow-[0_0_10px_#ff8a00]' : 'bg-zinc-800'"
+                                class="h-2 w-2 rounded-full transition-all duration-500"
+                                :class="(vehicle.status === 'active' || vehicle.status === 'moving') ? 'bg-primary shadow-[0_0_12px_#ff8a00] scale-110' : 'bg-zinc-800'"
                             ></div>
                         </div>
                     </template>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <!-- MOBILE FLEET TOGGLE -->
+    <button 
+        @click="isFleetListOpen = true"
+        class="md:hidden fixed bottom-24 left-6 z-[2000] w-14 h-14 rounded-2xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,138,0,0.3)] active:scale-95"
+    >
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+    </button>
 
-        <!-- Mission Ledger -->
-        <div class="col-span-12 lg:col-span-8 lg:row-span-4">
-            <x-trip-history :trips="$trips" />
+    <!-- 4. RIGHT HUD: Anomaly Feed -->
+    <div class="hidden md:flex absolute top-44 right-6 bottom-10 w-80 z-[1000] pointer-events-auto">
+        <div class="glass-obsidian rounded-[2rem] border border-white/10 overflow-hidden flex flex-col h-full shadow-2xl">
+            <x-anomaly-feed :anomalies="$recentAlerts" />
         </div>
+    </div>
+
+
+    <!-- 5. BOTTOM HUD: Selection Profile -->
+    <div 
+        x-show="selectedVehicle"
+        x-transition:enter="transition ease-out duration-500"
+        x-transition:enter-start="opacity-0 translate-y-8"
+        class="absolute bottom-24 md:bottom-10 left-4 md:left-80 right-4 md:right-96 z-[1001] pointer-events-auto"
+    >
+        <div class="glass-obsidian p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-primary/20 shadow-[0_0_50px_rgba(255,138,0,0.15)] flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4 md:gap-8 w-full md:w-auto">
+                <div class="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
+                    <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.3em] mb-1">Target_Unit</div>
+                    <h3 class="font-heading text-lg md:text-2xl font-bold text-white tracking-tight truncate" x-text="selectedVehicle?.license_plate"></h3>
+                </div>
+                <div class="hidden md:block h-10 w-[1px] bg-white/10 mx-4"></div>
+                <div class="flex gap-6 md:gap-8">
+                    <div>
+                        <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Status</div>
+                        <div class="flex items-center gap-2">
+                            <div class="h-2 w-2 rounded-full" :class="(selectedVehicle?.status === 'active' || selectedVehicle?.status === 'moving') ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-800'"></div>
+                            <span class="text-[9px] font-bold text-white uppercase tracking-widest" x-text="selectedVehicle?.status"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Score</div>
+                        <div class="text-base md:text-xl font-bold text-white" x-text="selectedVehicle?.driver?.risk_score ? Math.round(selectedVehicle.driver.risk_score) : '—'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 w-full md:w-auto">
+                <button @click="visualiseMission()" class="flex-1 md:flex-none px-6 md:px-8 py-3 md:py-4 bg-white text-black rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-xl active:scale-95">Replay_Mission</button>
+                <button @click="selectedVehicle = null; isFollowing = false;" class="p-3 md:p-4 border border-white/10 rounded-xl md:rounded-2xl text-zinc-500 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- FORENSIC INCIDENT MODAL --}}
     <div 
@@ -259,10 +238,28 @@
         box-shadow: none !important;
         padding: 0 !important;
     }
+    .leaflet-container {
+        background: #09090b !important;
+    }
     .custom-vengo-icon {
-        transition: all 4s linear; /* Smoothly slide over the polling interval */
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Snappy but smooth glide */
+    }
+    .vehicle-rotation {
+        transition: transform 0.5s ease-in-out;
     }
     .leaflet-popup-content { margin: 0 !important; }
+    .glass-tooltip {
+        background: rgba(0, 0, 0, 0.8) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 4px 8px !important;
+        font-size: 9px !important;
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+    }
 </style>
 
 @push('scripts')
@@ -283,6 +280,11 @@
             geofences: @json($geofences),
             viewportCoords: '00.0000° N, 00.0000° E',
             haversineDistance: 0,
+            systemStatus: 'Connecting...',
+            lastPingTime: 'None',
+            recentAlerts: @json($recentAlerts),
+            isFleetListOpen: false,
+            isMobile: window.innerWidth < 768,
 
             get filteredVehicles() {
                 return this.vehicles.filter(vehicle => {
@@ -313,6 +315,38 @@
                     // Request notification permission
                     if ("Notification" in window && Notification.permission === "default") {
                         Notification.requestPermission();
+                    }
+
+                    // REAL-TIME: Listen for Vehicle Location Updates via Reverb
+                    if (window.Echo) {
+                        window.Echo.connector.pusher.connection.bind('connected', () => {
+                            this.systemStatus = 'Online';
+                        });
+                        window.Echo.connector.pusher.connection.bind('disconnected', () => {
+                            this.systemStatus = 'Offline (Reconnecting...)';
+                        });
+
+                        window.Echo.channel('fleet-updates')
+                            .listen('VehicleLocationUpdated', (e) => {
+                                console.log('Live Telemetry Received:', e);
+                                this.handleRealTimeUpdate(e);
+                                
+                                // Show a quick toast or pulse
+                                this.lastPingTime = new Date().toLocaleTimeString();
+                            });
+
+                        window.Echo.channel('fleet-alerts')
+                            .listen('AlertGenerated', (e) => {
+                                console.log('New Alert Received:', e);
+                                this.recentAlerts.unshift(e.alert);
+                                
+                                // Optional: Dispatch native notification
+                                if ("Notification" in window && Notification.permission === "granted") {
+                                    new Notification(`ALERT: ${this.formatType(e.alert.type, e.alert.details)}`, {
+                                        body: `Vehicle ${e.alert.vehicle?.license_plate || 'TEST-001'} - Impact: ${e.alert.impact_score}`
+                                    });
+                                }
+                            });
                     }
 
                     window.addEventListener('inspect-alert', (e) => {
@@ -356,8 +390,8 @@
                 }).setView([19.0760, 72.8777], 11);
 
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
-                    backgroundColor: '#020203'
+                    maxZoom: 20,
+                    attribution: ''
                 }).addTo(this.map);
 
                 this.map.on('move', () => {
@@ -391,10 +425,11 @@
                         const color = gf.type === 'restricted' ? '#f43f5e' : (gf.type === 'depot' ? '#10b981' : '#3b82f6');
                         L.polygon(coords, {
                             color: color,
-                            weight: 1,
-                            fillOpacity: 0.1,
+                            weight: 2,
+                            fillColor: color,
+                            fillOpacity: 0.05,
                             dashArray: gf.type === 'restricted' ? '5, 5' : null
-                        }).addTo(this.map).bindTooltip(gf.name);
+                        }).addTo(this.map).bindTooltip(gf.name, { permanent: false, direction: 'center', className: 'glass-tooltip' });
                     }
                 });
             },
@@ -421,10 +456,14 @@
                                 className: 'custom-vengo-icon',
                                 html: `
                                     <div class="relative flex items-center justify-center">
-                                        <div class="absolute h-10 w-10 rounded-full bg-primary opacity-10 animate-fleetco-pulse"></div>
-                                        <div class="vehicle-rotation transition-transform duration-[4000ms] linear" style="transform: rotate(${log.heading || 0}deg)">
-                                            <div class="h-3 w-3 rounded-full bg-primary shadow-[0_0_15px_#ff8a00] border border-white/40"></div>
-                                            <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-white/80 rounded-full"></div>
+                                        <!-- Directional Shadow -->
+                                        <div class="absolute h-12 w-12 rounded-full bg-primary/20 blur-md"></div>
+                                        
+                                        <!-- Top-Down Vehicle Icon -->
+                                        <div class="vehicle-rotation" style="transform: rotate(${log.heading || 0}deg)">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#ff8a00" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+                                            </svg>
                                         </div>
                                     </div>
                                 `,
@@ -458,10 +497,13 @@
                                 // Calculate distance from last point (in meters)
                                 const dist = this.map.distance(lastLatLng, L.latLng(coords));
                                 
-                                // If jump is > 2km, it's a reset/dirty data. Clear path to avoid "teleport" lines.
-                                if (dist > 2000) {
-                                    path.setLatLngs([coords]);
-                                } else if (dist > 2) { // Only add if moved more than 2 meters
+                                // Filter out GPS jitter:
+                                // - Skip if distance is > 500m in one ping (likely bad GPS reading)
+                                // - Skip if moved less than 5 meters (GPS noise)
+                                if (dist > 500) {
+                                    // Looks like a GPS jump/glitch — skip this point
+                                    console.warn('GPS jitter detected, skipping point. Distance:', dist);
+                                } else if (dist > 5) {
                                     path.addLatLng(coords);
                                 }
                             }
@@ -472,6 +514,27 @@
                         }
                     }
                 });
+            },
+
+            handleRealTimeUpdate(data) {
+                const vehicleIndex = this.vehicles.findIndex(v => v.id === data.vehicleId);
+                if (vehicleIndex !== -1) {
+                    this.vehicles[vehicleIndex].status = data.status;
+                    this.vehicles[vehicleIndex].latest_telematics = {
+                        location: {
+                            coordinates: [data.lng, data.lat]
+                        },
+                        heading: data.heading,
+                        speed: data.speed
+                    };
+
+                    this.updateMarkers();
+
+                    if (this.selectedVehicle && this.selectedVehicle.id === data.vehicleId) {
+                        this.selectedVehicle = { ...this.vehicles[vehicleIndex] };
+                        this.calculateHaversine([data.lat, data.lng]);
+                    }
+                }
             },
 
             selectVehicle(vehicle) {

@@ -4,7 +4,7 @@
 <div class="space-y-8" x-data="driverManager()">
 
     {{-- Page Header --}}
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Operator Management</div>
             <h1 class="font-heading text-3xl font-bold tracking-tight">Fleet Drivers</h1>

@@ -348,6 +348,19 @@
                 watchId = navigator.geolocation.watchPosition(
                     (pos) => {
                         const now = Date.now();
+                        const accuracy = pos.coords.accuracy; // meters
+
+                        // Only send if GPS accuracy is good (< 30m) and throttle to 1 ping per 4s
+                        if (accuracy > 30) {
+                            text.innerText = `Weak GPS (±${Math.round(accuracy)}m)`;
+                            dot.style.background = '#f59e0b';
+                            return; // Skip this reading — too inaccurate
+                        }
+
+                        // Good GPS signal
+                        text.innerText = `Streaming Live (±${Math.round(accuracy)}m)`;
+                        dot.style.background = '#22c55e';
+
                         if (now - lastPing > 4000) {
                             sendTelemetry(
                                 pos.coords.latitude,
@@ -363,7 +376,7 @@
                         errorMsg.innerText = "GPS Error: " + err.message;
                         errorMsg.style.display = "block";
                     },
-                    { enableHighAccuracy: true, maximumAge: 0 }
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
                 );
             } else {
                 await stopTracking();

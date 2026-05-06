@@ -48,7 +48,7 @@ class TelemetryProcessor
         $this->riskEngine->analyze($log);
 
         // 5. Broadcast for Real-Time Dashboard
-        event(new \App\Events\TelematicsReceived($log));
+        event(new \App\Events\VehicleLocationUpdated($log));
 
         return $log;
     }
@@ -83,8 +83,12 @@ class TelemetryProcessor
             $distance = DB::selectOne("SELECT ST_Distance(?::geography, ?::geography) as distance", [$lastLog->location, $log->location])->distance;
             $distanceKm = $distance / 1000;
 
-            $currentTrip->increment('distance', $distanceKm);
-            $vehicle->increment('odometer', $distanceKm);
+            // GPS Sanity Check: A single ping should never cover more than 0.5km
+            // (that would mean traveling 360 km/h between pings). Discard GPS glitches.
+            if ($distanceKm < 0.5) {
+                $currentTrip->increment('distance', $distanceKm);
+                $vehicle->increment('odometer', $distanceKm);
+            }
             
             $totalTimeHours = $currentTrip->start_time->diffInSeconds($log->captured_at) / 3600;
             if ($totalTimeHours > 0) {
@@ -135,6 +139,15 @@ class TelemetryProcessor
                 'details' => ['landmark_id' => $landmark->id, 'landmark_name' => $landmark->name],
                 'occurred_at' => $log->captured_at,
             ]);
+        }
+    public function stopSession(Vehicle $vehicle): void
+    {
+        $currentTrip = Trip::where('vehicle_id', $vehicle->id)
+            ->whereNull('end_time')
+            ->first();
+
+        if ($currentTrip) {
+            $currentTrip->update(['end_time' => now()]);
         }
     }
 }

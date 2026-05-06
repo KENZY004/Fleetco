@@ -78,8 +78,9 @@ class TelematicsController extends Controller
             return response()->json(['error' => 'UNAUTHORIZED_UPLINK'], 401);
         }
 
-        // Set status to offline
+        // Set status to offline and close active trips
         $vehicle->update(['status' => 'offline']);
+        $this->processor->stopSession($vehicle);
 
         // Broadcast a final "offline" status so the dashboard updates instantly
         // We create a dummy log just for the broadcast event if needed, 

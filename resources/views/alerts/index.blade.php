@@ -50,18 +50,18 @@
     {{-- Filter Bar --}}
     <form method="GET" action="{{ route('alerts.index') }}" class="flex flex-wrap items-center gap-3">
         <select name="type" onchange="this.form.submit()"
-            class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary/50 transition-colors">
-            <option value="">All Types</option>
-            <option value="speeding" {{ request('type') === 'speeding' ? 'selected' : '' }}>Speeding</option>
-            <option value="geofence_breach" {{ request('type') === 'geofence_breach' ? 'selected' : '' }}>Geofence Breach</option>
-            <option value="geofence_entry" {{ request('type') === 'geofence_entry' ? 'selected' : '' }}>Geofence Entry</option>
+            class="bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary/50 transition-colors cursor-pointer">
+            <option value="" class="bg-zinc-900">All Types</option>
+            <option value="speeding" class="bg-zinc-900" {{ request('type') === 'speeding' ? 'selected' : '' }}>Speeding</option>
+            <option value="geofence_breach" class="bg-zinc-900" {{ request('type') === 'geofence_breach' ? 'selected' : '' }}>Geofence Breach</option>
+            <option value="geofence_entry" class="bg-zinc-900" {{ request('type') === 'geofence_entry' ? 'selected' : '' }}>Geofence Entry</option>
         </select>
 
         <select name="status" onchange="this.form.submit()"
-            class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary/50 transition-colors">
-            <option value="">All Status</option>
-            <option value="unresolved" {{ request('status') === 'unresolved' ? 'selected' : '' }}>Unresolved</option>
-            <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
+            class="bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary/50 transition-colors cursor-pointer">
+            <option value="" class="bg-zinc-900">All Status</option>
+            <option value="unresolved" class="bg-zinc-900" {{ request('status') === 'unresolved' ? 'selected' : '' }}>Unresolved</option>
+            <option value="resolved" class="bg-zinc-900" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
         </select>
 
         @if(request('type') || request('status'))

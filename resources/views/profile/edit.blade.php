@@ -1,29 +1,29 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
+@section('content')
+<div class="max-w-4xl mx-auto space-y-8">
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
-        </div>
+    {{-- Page Header --}}
+    <div>
+        <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Command Center</div>
+        <h1 class="font-heading text-3xl font-bold tracking-tight">Profile Settings</h1>
+        <p class="text-zinc-500 text-sm mt-1">Manage your identity, security and system preferences.</p>
     </div>
-</x-app-layout>
+
+    {{-- Forms Grid --}}
+    <div class="space-y-8">
+        <x-fleet-card>
+            @include('profile.partials.update-profile-information-form')
+        </x-fleet-card>
+
+        <x-fleet-card>
+            @include('profile.partials.update-password-form')
+        </x-fleet-card>
+
+        <x-fleet-card class="border-red-500/20">
+            @include('profile.partials.delete-user-form')
+        </x-fleet-card>
+    </div>
+</div>
+@endsection
+

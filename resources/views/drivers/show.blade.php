@@ -6,6 +6,9 @@
     {{-- Header / Profile Summary --}}
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div class="flex items-center gap-6">
+            <a href="{{ route('drivers.index') }}" class="h-10 w-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:border-white/20 transition-all flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
             <div class="h-20 w-20 rounded-[2rem] bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-black text-3xl font-black shadow-xl shadow-primary/20">
                 {{ substr($driver->name, 0, 1) }}
             </div>

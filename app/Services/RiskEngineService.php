@@ -9,6 +9,8 @@ use App\Models\Landmark;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Clickbar\Magellan\Data\Geometries\Point;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SecurityAlert;
 
 class RiskEngineService
 {
@@ -58,13 +60,13 @@ class RiskEngineService
      */
     protected function detectSpeeding(TelematicsLog $log, Driver $driver): bool
     {
-        $speedLimit = 5; // Set to walking pace for testing (was 100)
-        $threshold = $speedLimit + 1;
+        $speedLimit = 80;  // Standard urban speed limit in km/h
+        $threshold = $speedLimit + 10; // Allow 10km/h buffer before flagging
 
         if ($log->speed > $threshold) {
             $impact = 5.00;
             
-            RiskEvent::create([
+            $event = RiskEvent::create([
                 'driver_id' => $driver->id,
                 'vehicle_id' => $log->vehicle_id,
                 'telematics_log_id' => $log->id,
@@ -77,6 +79,9 @@ class RiskEngineService
                 ],
                 'occurred_at' => $log->captured_at,
             ]);
+
+            // Broadcast real-time alert
+            event(new \App\Events\AlertGenerated($event));
 
             $this->applyScorePenalty($driver, $impact);
             return true;
@@ -134,10 +139,14 @@ class RiskEngineService
             $breach = false;
             $type = '';
 
+            // Depot / Home Base Logic: If inside a depot, they are "Safe"
+            $isInDepot = Landmark::where('type', 'depot')->get()->contains(fn($l) => $this->isPointInPolygon($point, is_string($l->area) ? json_decode($l->area, true) : $l->area));
+
             if ($landmark->type === 'restricted' && $isInside) {
                 $breach = true;
                 $type = 'unauthorized_entry';
-            } elseif ($landmark->type === 'optimized_route' && !$isInside) {
+            } elseif ($landmark->type === 'optimized_route' && !$isInside && !$isInDepot) {
+                // Only alert for route deviation if they are NOT in a safe depot
                 $breach = true;
                 $type = 'route_deviation';
             }
@@ -157,7 +166,7 @@ class RiskEngineService
                 $isDuplicate = $exists && ($exists->details['landmark_id'] ?? null) == $landmark->id;
 
                 if (!$isDuplicate) {
-                    RiskEvent::create([
+                    $alert = RiskEvent::create([
                         'driver_id' => $driver->id,
                         'vehicle_id' => $log->vehicle_id,
                         'telematics_log_id' => $log->id,
@@ -170,6 +179,25 @@ class RiskEngineService
                         ],
                         'occurred_at' => $log->captured_at,
                     ]);
+
+                    // Broadcast real-time alert
+                    event(new \App\Events\AlertGenerated($alert));
+
+                    // DISPATCH REAL-TIME SECURITY ALERT EMAIL
+                    try {
+                        $adminEmail = config('mail.from.address'); // Sending to the support email for review
+                        $emailData = [
+                            'vehicleName' => $log->vehicle->name ?? 'Unknown Vehicle',
+                            'driverName' => $driver->name,
+                            'incidentType' => 'Geofence Breach (' . str_replace('_', ' ', $type) . ')',
+                            'deviation' => 'Zone: ' . $landmark->name,
+                        ];
+                        
+                        Mail::to($adminEmail)->send(new SecurityAlert($emailData));
+                        \Illuminate\Support\Facades\Log::info("RiskEngine: Security Alert Email dispatched to {$adminEmail}");
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("RiskEngine: Failed to send security alert: " . $e->getMessage());
+                    }
 
                     $this->applyScorePenalty($driver, $impact);
                 }
