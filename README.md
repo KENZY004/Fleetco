@@ -57,4 +57,4 @@ The platform features Role-Based Access Control (RBAC):
 *   **Driver**: Access to the "Mobile Link" Co-Pilot dashboard for shift tracking and self-monitoring.
 
 ---
-Built with ❤️ for professional fleet operators.
+Built with ❤️ for professional fleet operators by Team MinVa.
