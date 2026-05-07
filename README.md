@@ -25,7 +25,7 @@
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/fleetco.git
+    git clone https://github.com/KENZY004/Fleetco.git
     cd fleetco
     ```
 
