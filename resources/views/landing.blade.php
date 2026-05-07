@@ -93,7 +93,7 @@
             </div>
         </nav>
 
-        <div class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-20 md:py-0">
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-20 md:pt-0 md:pb-32">
             <span id="label" class="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-orange-500 mb-6 md:mb-8 opacity-0 translate-y-4">real-time vehicle intelligence</span>
             <h1 id="title" class="font-heading text-4xl md:text-[8rem] font-extrabold tracking-tight leading-[0.9] mb-8 md:mb-12 opacity-0">
                 FLEET <br>
@@ -103,17 +103,17 @@
                 Monitor every movement with precision. Our tracking system provides <br class="hidden md:block">the data you need for safety and operational efficiency.
             </p>
             
-            <div id="cta" class="opacity-0 translate-y-8 flex items-center gap-8">
-                <a href="{{ route('dashboard') }}" class="group relative inline-flex items-center gap-4 md:gap-8 px-8 md:px-16 py-4 md:py-8 bg-white text-black rounded-full overflow-hidden shadow-[0_20px_60px_rgba(255,255,255,0.1)] hover:shadow-[0_30px_100px_rgba(255,255,255,0.3)] transition-all">
-                    <span class="text-[9px] md:text-[10px] font-black uppercase tracking-[0.6em] ml-2">Establish Link</span>
-                    <div class="h-4 md:h-5 w-[1px] bg-black/10"></div>
+            <div id="cta" class="opacity-0 translate-y-8 flex items-center justify-center">
+                <a href="{{ route('dashboard') }}" class="group relative inline-flex items-center gap-6 md:gap-10 px-10 md:px-16 py-5 md:py-8 bg-white text-black rounded-full overflow-hidden shadow-[0_20px_60px_rgba(255,255,255,0.1)] hover:shadow-[0_30px_100px_rgba(255,255,255,0.3)] transition-all">
+                    <span class="text-[9px] md:text-[11px] font-black uppercase tracking-[0.6em]">Establish Link</span>
+                    <div class="h-4 md:h-6 w-[1px] bg-black/20"></div>
                     <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
             </div>
         </div>
 
         <!-- Float Info Matrix -->
-        <div class="hidden md:grid absolute bottom-12 md:bottom-16 left-0 md:left-16 right-0 md:right-16 grid-cols-1 md:grid-cols-3 gap-12 md:gap-20 z-10 px-8 pb-20 md:pb-0 bg-black md:bg-transparent">
+        <div class="hidden md:grid absolute bottom-6 md:bottom-10 left-0 md:left-16 right-0 md:right-16 grid-cols-1 md:grid-cols-3 gap-12 md:gap-20 z-10 px-8 pb-20 md:pb-0 bg-black md:bg-transparent">
             <div class="float-card opacity-0 translate-x-4">
                 <div class="text-[8px] md:text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] mb-2 md:mb-4">Metric_01</div>
                 <div class="text-3xl md:text-5xl font-black text-white italic tracking-tighter">99.9 <span class="text-[10px] md:text-xs text-zinc-600 font-bold ml-1 tracking-widest uppercase">%</span></div>

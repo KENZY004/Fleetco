@@ -26,3 +26,5 @@ fleetco_security_spec.md
 # OS files
 .DS_Store
 Thumbs.db
+ngrok.exe
+.phpunit.result.cache
