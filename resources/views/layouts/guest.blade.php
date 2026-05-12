@@ -20,7 +20,7 @@
         <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]"></div>
     </div>
 
-    <div class="w-full max-w-5xl relative z-10">
+    <div class="w-full max-w-3xl relative z-10">
         <div class="glass-obsidian rounded-[2rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
             {{ $slot }}
         </div>
