@@ -28,11 +28,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->role === 'admin') {
+        if ($request->user()->role === 'admin' || $request->user()->role === 'fleet_manager') {
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
-        return redirect()->intended(route('track-me', absolute: false));
+        if ($request->user()->role === 'unassigned') {
+            return redirect()->intended(route('unassigned', absolute: false));
+        }
+
+        return redirect()->intended(route('driver.dashboard', absolute: false));
     }
 
     /**

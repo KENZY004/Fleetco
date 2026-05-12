@@ -26,6 +26,85 @@
         {{ session('success') }}
     </div>
     @endif
+    @if(session('error'))
+    <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium flex items-center gap-3">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        {{ session('error') }}
+    </div>
+    @endif
+
+    {{-- INVITE DRIVER PANEL --}}
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        {{-- Send Invite Form --}}
+        <div class="lg:col-span-2 fleetco-card rounded-[2rem] p-8">
+            <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Driver Onboarding</div>
+            <h2 class="font-heading text-lg font-bold mb-1">Invite a Driver</h2>
+            <p class="text-sm text-zinc-500 mb-6">Send a secure invite link via email. Links expire after 48 hours.</p>
+            <form method="POST" action="{{ route('fleet.invite.send') }}" class="flex gap-3">
+                @csrf
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="driver@example.com"
+                    required
+                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors"
+                >
+                <button type="submit" class="px-6 py-3 bg-white text-black rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-zinc-200 transition-all active:scale-95 whitespace-nowrap">
+                    Send Invite
+                </button>
+            </form>
+            @error('email')
+                <p class="text-red-400 text-xs mt-2">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- Pending Invites Table --}}
+        <div class="lg:col-span-3 fleetco-card rounded-[2rem] p-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-1">Pending</div>
+                    <h2 class="font-heading text-lg font-bold">Active Invitations</h2>
+                </div>
+                @if($pendingInvites->count() > 0)
+                    <span class="px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-[10px] font-bold uppercase tracking-wider">
+                        {{ $pendingInvites->count() }} pending
+                    </span>
+                @endif
+            </div>
+
+            @if($pendingInvites->isEmpty())
+                <div class="flex flex-col items-center justify-center py-8 opacity-30">
+                    <svg class="w-8 h-8 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <p class="text-xs text-zinc-600 uppercase tracking-widest">No pending invitations</p>
+                </div>
+            @else
+                <div class="space-y-3">
+                    @foreach($pendingInvites as $invite)
+                    <div class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                        <div class="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-white truncate">{{ $invite->email }}</div>
+                            <div class="text-[10px] text-zinc-500 mt-0.5">Expires {{ $invite->expires_at->diffForHumans() }}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-500 text-[9px] font-bold uppercase tracking-wider">Pending</span>
+                            <form method="POST" action="{{ route('fleet.invite.send') }}">
+                                @csrf
+                                <input type="hidden" name="email" value="{{ $invite->email }}">
+                                <button type="submit" class="px-3 py-1.5 border border-white/10 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:border-white/20 transition-all">
+                                    Resend
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
 
     {{-- Driver Grid --}}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

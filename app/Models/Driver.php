@@ -13,6 +13,7 @@ class Driver extends Model
     use HasFactory;
     protected $fillable = [
         'user_id',
+        'fleet_id',
         'name',
         'phone_number',
         'license_number',
@@ -50,6 +51,11 @@ class Driver extends Model
     public function vehicle(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Vehicle::class, 'current_driver_id');
+    }
+
+    public function fleet(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Fleet::class);
     }
 
 }

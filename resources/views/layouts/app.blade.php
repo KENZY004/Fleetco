@@ -34,6 +34,7 @@
             <x-nav-link-sidebar icon="dashboard" route="dashboard" label="HQ" />
             <x-nav-link-sidebar icon="driver" route="drivers.index" label="Ops" />
             <x-nav-link-sidebar icon="vehicle" route="vehicles.index" label="Fleet" />
+            {{-- TODO: Teammate to add Routes nav item here: <x-nav-link-sidebar icon="route" route="fleet.routes.index" label="Routes" /> --}}
             <x-nav-link-sidebar icon="trips" route="trips.index" label="Trips" />
             <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
             <x-nav-link-sidebar icon="geofence" route="geofences.index" label="Zones" />

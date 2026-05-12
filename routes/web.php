@@ -16,8 +16,9 @@ Route::get('/', function () {
 })->name('landing');
 
 Route::middleware(['auth'])->group(function () {
-    // Admin Only Routes
+    // Admin & Fleet Manager Routes
     Route::middleware(['admin'])->group(function () {
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/api/vehicles', [DashboardController::class, 'getVehicleStatus']);
         Route::get('/api/alerts', [DashboardController::class, 'getSecurityAlerts']);
@@ -50,9 +51,49 @@ Route::middleware(['auth'])->group(function () {
         // Global Settings
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+        // Admin: Pending Email Verifications
+        Route::get('/admin/verifications', [App\Http\Controllers\AdminVerificationsController::class, 'index'])->name('admin.verifications.index');
+        Route::post('/admin/verifications/{user}/force', [App\Http\Controllers\AdminVerificationsController::class, 'forceVerify'])->name('admin.verifications.force');
+
+        // Fleet Manager invitation (requires verified email)
+        Route::middleware(['verified'])->group(function () {
+            Route::post('/fleet/invite/send', [App\Http\Controllers\InviteController::class, 'send'])->name('fleet.invite.send');
+        });
+    });
+
+    // Driver Co-Pilot Routes
+    Route::middleware(['driver'])->prefix('driver')->name('driver.')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Driver\DashboardController::class, 'index'])->name('dashboard');
+    
+        // Duty Status
+        Route::post('/duty/on', [App\Http\Controllers\Driver\DutyController::class, 'goOnDuty'])->name('duty.on');
+        Route::post('/duty/break', [App\Http\Controllers\Driver\DutyController::class, 'takeBreak'])->name('duty.break');
+        Route::post('/duty/off', [App\Http\Controllers\Driver\DutyController::class, 'goOffDuty'])->name('duty.off');
+        
+        // Maintenance
+        Route::post('/maintenance', [App\Http\Controllers\Driver\MaintenanceController::class, 'store'])->name('maintenance.store');
+        
+        // Telemetry
+        Route::post('/telemetry', [App\Http\Controllers\Driver\TelemetryController::class, 'store'])->name('telemetry.store');
+
+        // Sidebar Pages
+        Route::get('/vehicle', [App\Http\Controllers\Driver\VehicleController::class, 'index'])->name('vehicle');
+        Route::get('/trips', [App\Http\Controllers\Driver\TripController::class, 'index'])->name('trips');
+        Route::get('/risk', [App\Http\Controllers\Driver\RiskController::class, 'index'])->name('risk');
+        
+        // Profile
+        Route::get('/profile', [App\Http\Controllers\Driver\ProfileController::class, 'index'])->name('profile');
+        Route::put('/profile', [App\Http\Controllers\Driver\ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [App\Http\Controllers\Driver\ProfileController::class, 'updatePassword'])->name('profile.password');
     });
 
     // All Authenticated Users
+    // Unassigned Drivers
+    Route::get('/unassigned', function() {
+        return view('unassigned');
+    })->name('unassigned');
+
     Route::get('/track-me', function() {
         return view('track-me');
     })->name('track-me');
@@ -60,6 +101,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Fleet Route Management (Admin/Manager)
+    Route::prefix('fleet/routes')->name('fleet.routes.')->group(function() {
+        Route::get('/', [App\Http\Controllers\Fleet\RouteController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Fleet\RouteController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Fleet\RouteController::class, 'store'])->name('store');
+        Route::post('/{id}/assign', [App\Http\Controllers\Fleet\RouteController::class, 'assign'])->name('assign');
+    });
+
+    // Driver Route Actions
+    Route::post('/driver/route/{routeId}/waypoint/{order}/reach', [App\Http\Controllers\Driver\RouteController::class, 'markWaypointReached'])->name('driver.route.waypoint.reach');
 });
 
 require __DIR__.'/auth.php';
+
+// Driver Invitation Routes (Public — no guest/auth middleware, token validates itself)
+Route::get('/register/invite/{token}', [App\Http\Controllers\InviteController::class, 'showInviteRegistration'])->name('register.invite');
+Route::post('/register/invite', [App\Http\Controllers\InviteController::class, 'storeInviteRegistration'])->name('register.invite.store');
+
+Route::get('/join', function() {
+    return view('join');
+})->name('join');

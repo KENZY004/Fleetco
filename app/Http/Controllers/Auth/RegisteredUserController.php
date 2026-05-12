@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Fleet;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +26,7 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
+     * Creates a new Fleet for the registrant and assigns fleet_manager role.
      *
      * @throws ValidationException
      */
@@ -32,23 +34,30 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        // Create a new Fleet for this manager
+        $fleet = Fleet::create([
+            'name' => $request->first_name . ' ' . $request->last_name . "'s Fleet",
         ]);
 
         $user = User::create([
             'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'last_name'  => $request->last_name,
+            'name'       => $request->first_name . ' ' . $request->last_name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'role'       => 'fleet_manager',
+            'fleet_id'   => $fleet->id,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('track-me', absolute: false));
+        return redirect()->route('verification.notice');
     }
 }

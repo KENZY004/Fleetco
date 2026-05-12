@@ -30,7 +30,14 @@ class DriverController extends Controller
         $vehicles = $this->vehicleRepo->getAllWithStatus();
         $unlinkedUsers = $this->driverRepo->getUnlinkedUsers();
 
-        return view('drivers.index', compact('drivers', 'vehicles', 'unlinkedUsers'));
+        // Pending invitations for this fleet (active, not yet accepted)
+        $pendingInvites = \App\Models\DriverInvitation::valid()
+            ->where('fleet_id', auth()->user()->fleet_id)
+            ->with('inviter')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('drivers.index', compact('drivers', 'vehicles', 'unlinkedUsers', 'pendingInvites'));
     }
 
     public function show(Driver $driver): View

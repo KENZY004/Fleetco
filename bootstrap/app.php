@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'driver' => \App\Http\Middleware\DriverMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

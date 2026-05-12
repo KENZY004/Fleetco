@@ -9,7 +9,11 @@ class DriverRepository
 {
     public function all(): Collection
     {
-        return Driver::with(['user', 'riskEvents', 'vehicle'])->withCount('telematicsLogs')->get();
+        $fleetId = auth()->user()?->fleet_id;
+        return Driver::with(['user', 'riskEvents', 'vehicle'])
+            ->withCount(['telematicsLogs', 'riskEvents'])
+            ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
+            ->get();
     }
 
     public function find(int $id): ?Driver
@@ -19,22 +23,30 @@ class DriverRepository
 
     public function getUnassigned(): Collection
     {
-        return \App\Models\Driver::whereDoesntHave('vehicle')->get();
+        $fleetId = auth()->user()?->fleet_id;
+        return \App\Models\Driver::whereDoesntHave('vehicle')
+            ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
+            ->get();
     }
 
     public function getUnlinkedUsers(): Collection
     {
-        return \App\Models\User::whereDoesntHave('driver')->where('role', '!=', 'admin')->get();
+        $fleetId = auth()->user()?->fleet_id;
+        return \App\Models\User::whereDoesntHave('driver')
+            ->where('role', 'driver')
+            ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
+            ->get();
     }
 
     public function create(array $data): Driver
     {
         return Driver::create([
-            'name' => $data['name'],
-            'phone_number' => $data['phone_number'] ?? null,
+            'fleet_id'       => auth()->user()?->fleet_id,
+            'name'           => $data['name'],
+            'phone_number'   => $data['phone_number'] ?? null,
             'license_number' => $data['license_number'] ?? null,
-            'user_id' => $data['user_id'] ?? null,
-            'risk_score' => 100.00,
+            'user_id'        => $data['user_id'] ?? null,
+            'risk_score'     => 100.00,
         ]);
     }
 

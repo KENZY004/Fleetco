@@ -14,13 +14,18 @@
 
         <!-- Form Content -->
         <div class="w-full lg:w-7/12 p-8 lg:p-20 flex flex-col justify-center">
-            <div class="mb-10">
-                <h2 class="font-heading text-3xl font-bold text-white mb-2">Create your account</h2>
-                <p class="text-sm text-zinc-500">
-                    Already have an account? 
-                    <a href="{{ route('login') }}" class="text-white hover:text-orange-500 transition-colors font-medium">Sign in</a>
-                </p>
+        <div class="mb-10">
+            {{-- FLEET MANAGER ACCOUNT PILL --}}
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-500/30 bg-orange-500/10 mb-6">
+                <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">Fleet Manager Account</span>
             </div>
+            <h2 class="font-heading text-3xl font-bold text-white mb-2">Create your account</h2>
+            <p class="text-sm text-zinc-500">
+                Already have an account? 
+                <a href="{{ route('login') }}" class="text-white hover:text-orange-500 transition-colors font-medium">Sign in</a>
+            </p>
+        </div>
 
             <form method="POST" action="{{ route('register') }}" class="space-y-6">
                 @csrf

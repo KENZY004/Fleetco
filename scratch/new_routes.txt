@@ -1,0 +1,12 @@
+
+    // Fleet Route Management (Admin/Manager)
+    Route::prefix('fleet/routes')->name('fleet.routes.')->group(function() {
+        Route::get('/', [App\Http\Controllers\Fleet\RouteController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Fleet\RouteController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Fleet\RouteController::class, 'store'])->name('store');
+        Route::post('/{id}/assign', [App\Http\Controllers\Fleet\RouteController::class, 'assign'])->name('assign');
+    });
+
+    // Driver Route Actions
+    Route::post('/driver/route/{routeId}/waypoint/{order}/reach', [App\Http\Controllers\Driver\RouteController::class, 'markWaypointReached'])->name('driver.route.waypoint.reach');
+});

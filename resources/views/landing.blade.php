@@ -79,15 +79,22 @@
             </div>
             <div class="flex items-center gap-3 md:gap-6 scale-90 md:scale-100">
                 @auth
-                    <a href="{{ route('dashboard') }}" class="group relative px-6 md:px-10 py-3 md:py-4 overflow-hidden rounded-full border border-white/10 active:scale-95 transition-all">
-                        <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                        <span class="relative z-10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-black transition-colors duration-500">Enter Hub</span>
-                    </a>
+                    @if(auth()->user()->role === 'admin')
+                        <a href="{{ route('dashboard') }}" class="group relative px-6 md:px-10 py-3 md:py-4 overflow-hidden rounded-full border border-white/10 active:scale-95 transition-all">
+                            <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                            <span class="relative z-10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-black transition-colors duration-500">Enter Command Hub</span>
+                        </a>
+                    @else
+                        <a href="{{ route('driver.dashboard') }}" class="group relative px-6 md:px-10 py-3 md:py-4 overflow-hidden rounded-full border border-white/10 active:scale-95 transition-all">
+                            <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                            <span class="relative z-10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-black transition-colors duration-500">Enter Co-Pilot Hub</span>
+                        </a>
+                    @endif
                 @else
                     <a href="{{ route('login') }}" class="text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-zinc-400 hover:text-white transition-colors">Login</a>
                     <a href="{{ route('register') }}" class="group relative px-6 md:px-8 py-3 overflow-hidden rounded-full border border-orange-500/30 active:scale-95 transition-all">
                         <div class="absolute inset-0 bg-orange-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                        <span class="relative z-10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-white transition-colors duration-500">Register</span>
+                        <span class="relative z-10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-white transition-colors duration-500">Manage Fleet</span>
                     </a>
                 @endauth
             </div>
@@ -103,12 +110,23 @@
                 Monitor every movement with precision. Our tracking system provides <br class="hidden md:block">the data you need for safety and operational efficiency.
             </p>
             
-            <div id="cta" class="opacity-0 translate-y-8 flex items-center justify-center">
-                <a href="{{ route('dashboard') }}" class="group relative inline-flex items-center gap-6 md:gap-10 px-10 md:px-16 py-5 md:py-8 bg-white text-black rounded-full overflow-hidden shadow-[0_20px_60px_rgba(255,255,255,0.1)] hover:shadow-[0_30px_100px_rgba(255,255,255,0.3)] transition-all">
-                    <span class="text-[9px] md:text-[11px] font-black uppercase tracking-[0.6em]">Establish Link</span>
-                    <div class="h-4 md:h-6 w-[1px] bg-black/20"></div>
-                    <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
+            <div id="cta" class="opacity-0 translate-y-8 flex flex-col items-center justify-center gap-4">
+                @auth
+                    <a href="{{ auth()->user()->role === 'admin' || auth()->user()->role === 'fleet_manager' ? route('dashboard') : route('driver.dashboard') }}" class="group relative inline-flex items-center gap-6 md:gap-10 px-10 md:px-16 py-5 md:py-8 bg-white text-black rounded-full overflow-hidden shadow-[0_20px_60px_rgba(255,255,255,0.1)] hover:shadow-[0_30px_100px_rgba(255,255,255,0.3)] transition-all">
+                        <span class="text-[9px] md:text-[11px] font-black uppercase tracking-[0.6em]">Establish Link</span>
+                        <div class="h-4 md:h-6 w-[1px] bg-black/20"></div>
+                        <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="group relative inline-flex items-center gap-6 md:gap-10 px-10 md:px-16 py-5 md:py-8 bg-white text-black rounded-full overflow-hidden shadow-[0_20px_60px_rgba(255,255,255,0.1)] hover:shadow-[0_30px_100px_rgba(255,255,255,0.3)] transition-all">
+                        <span class="text-[9px] md:text-[11px] font-black uppercase tracking-[0.6em]">Manage Fleet</span>
+                        <div class="h-4 md:h-6 w-[1px] bg-black/20"></div>
+                        <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                    <a href="{{ route('join') }}" class="text-[9px] font-bold text-zinc-600 hover:text-orange-500 transition-colors uppercase tracking-[0.3em]">
+                        Driver? Enter your invite code →
+                    </a>
+                @endauth
             </div>
         </div>
 
@@ -134,64 +152,72 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (typeof gsap === 'undefined') return;
-            
-            const tl = gsap.timeline();
-            const gaugeLength = 188.5;
-
-            gsap.set("#gauge-circle", { strokeDasharray: gaugeLength, strokeDashoffset: gaugeLength });
-
-            tl.to("#gauge-circle", {
-                strokeDashoffset: 0,
-                duration: 4,
-                ease: "power2.inOut"
-            });
-
-            tl.to("#speed-value", {
-                innerText: 240,
-                duration: 4,
-                snap: { innerText: 1 },
-                ease: "power2.inOut",
-                onUpdate: function() {
-                    const val = parseInt(this.targets()[0].innerText);
-                    if(val > 100) document.getElementById('status-text').innerText = "Syncing Neural Link";
-                    if(val > 200) {
-                        document.getElementById('status-text').innerText = "Link Stable";
-                        document.getElementById('status-text').style.color = "#ff8a00";
-                    }
+            const initAnimation = () => {
+                if (typeof window.gsap === 'undefined') {
+                    setTimeout(initAnimation, 50);
+                    return;
                 }
-            }, 0);
+                
+                const gsap = window.gsap;
+                const tl = gsap.timeline();
+                const gaugeLength = 188.5;
 
-            tl.to("#loader-bar", {
-                width: "100%",
-                duration: 4,
-                ease: "power2.inOut"
-            }, 0);
+                gsap.set("#gauge-circle", { strokeDasharray: gaugeLength, strokeDashoffset: gaugeLength });
 
-            tl.to("#loader", {
-                y: "-110%",
-                duration: 1.5,
-                ease: "expo.inOut",
-                delay: 0.3
-            });
+                tl.to("#gauge-circle", {
+                    strokeDashoffset: 0,
+                    duration: 4,
+                    ease: "power2.inOut"
+                });
 
-            tl.to("#hero", {
-                opacity: 1,
-                duration: 0.1,
-                pointerEvents: 'auto'
-            }, "-=0.8");
+                tl.to("#speed-value", {
+                    innerText: 240,
+                    duration: 4,
+                    snap: { innerText: 1 },
+                    ease: "power2.inOut",
+                    onUpdate: function() {
+                        const val = parseInt(this.targets()[0].innerText);
+                        if(val > 100) document.getElementById('status-text').innerText = "Syncing Neural Link";
+                        if(val > 200) {
+                            document.getElementById('status-text').innerText = "Link Stable";
+                            document.getElementById('status-text').style.color = "#ff8a00";
+                        }
+                    }
+                }, 0);
 
-            tl.to(".hero-image", {
-                scale: 1,
-                duration: 5,
-                ease: "power2.out"
-            }, "-=0.8");
+                tl.to("#loader-bar", {
+                    width: "100%",
+                    duration: 4,
+                    ease: "power2.inOut"
+                }, 0);
 
-            tl.to("#label", { opacity: 1, y: 0, duration: 1.5 }, "-=3.5");
-            tl.to("#title", { opacity: 1, scale: 1, duration: 2, ease: "expo.out" }, "-=3");
-            tl.to("#desc", { opacity: 1, y: 0, duration: 1.5 }, "-=2.5");
-            tl.to("#cta", { opacity: 1, y: 0, duration: 1.2, ease: "back.out(1.5)" }, "-=2");
-            tl.to(".float-card", { opacity: 1, x: 0, duration: 1.5, stagger: 0.3 }, "-=1.5");
+                tl.to("#loader", {
+                    y: "-110%",
+                    duration: 1.5,
+                    ease: "expo.inOut",
+                    delay: 0.3
+                });
+
+                tl.to("#hero", {
+                    opacity: 1,
+                    duration: 0.1,
+                    pointerEvents: 'auto'
+                }, "-=0.8");
+
+                tl.to(".hero-image", {
+                    scale: 1,
+                    duration: 5,
+                    ease: "power2.out"
+                }, "-=0.8");
+
+                tl.to("#label", { opacity: 1, y: 0, duration: 1.5 }, "-=3.5");
+                tl.to("#title", { opacity: 1, scale: 1, duration: 2, ease: "expo.out" }, "-=3");
+                tl.to("#desc", { opacity: 1, y: 0, duration: 1.5 }, "-=2.5");
+                tl.to("#cta", { opacity: 1, y: 0, duration: 1.2, ease: "back.out(1.5)" }, "-=2");
+                tl.to(".float-card", { opacity: 1, x: 0, duration: 1.5, stagger: 0.3 }, "-=1.5");
+            };
+            
+            initAnimation();
         });
     </script>
 </body>

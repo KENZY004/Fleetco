@@ -12,7 +12,10 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        $vehicles = Vehicle::with(['driver', 'latestTelematics'])->get();
+        $fleetId = auth()->user()?->fleet_id;
+        $vehicles = Vehicle::with(['driver', 'latestTelematics', 'activeRoute'])
+            ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
+            ->get();
         $timeout = \Carbon\Carbon::now()->subSeconds(45);
 
         // Map through vehicles and force status to offline if they are stale
@@ -30,15 +33,16 @@ class VehicleRepository
      */
     public function find(int $id): ?Vehicle
     {
-        return Vehicle::with(['driver', 'latestTelematics'])->find($id);
+        return Vehicle::with(['driver', 'latestTelematics', 'activeRoute'])->find($id);
     }
 
     public function create(array $data): Vehicle
     {
         return Vehicle::create([
-            'name' => $data['name'],
+            'fleet_id'      => auth()->user()?->fleet_id,
+            'name'          => $data['name'],
             'license_plate' => strtoupper($data['license_plate']),
-            'status' => $data['status'],
+            'status'        => $data['status'],
         ]);
     }
 

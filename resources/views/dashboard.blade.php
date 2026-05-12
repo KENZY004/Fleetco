@@ -48,7 +48,16 @@
                         >
                             <div class="flex-1 min-w-0">
                                 <h4 class="text-sm font-bold text-white tracking-tight truncate group-hover/item:text-primary transition-colors" x-text="vehicle.name"></h4>
-                                <span class="text-[10px] font-medium text-zinc-600 tracking-tight" x-text="vehicle.license_plate"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-medium text-zinc-600 tracking-tight" x-text="vehicle.license_plate"></span>
+                                    <template x-if="vehicle.active_route">
+                                        <div class="flex items-center gap-1">
+                                            <div class="h-1 w-1 bg-primary rounded-full"></div>
+                                            <span class="text-[8px] font-bold text-primary uppercase tracking-widest" 
+                                                  x-text="vehicle.active_route.name + ' (' + reachedCount(vehicle.active_route.waypoints) + '/' + vehicle.active_route.waypoints.length + ')'"></span>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                             <div 
                                 class="h-2 w-2 rounded-full transition-all duration-500"
@@ -308,6 +317,7 @@
             paths: {}, // Store live paths
             selectedVehicle: null,
             inspectingAlert: null,
+            routePolylines: {}, // Store route polylines
             forensicMap: null,
             forensicMarker: null,
             searchQuery: '',
@@ -334,6 +344,11 @@
 
                     return matchesSearch && matchesStatus;
                 });
+            },
+
+            reachedCount(waypoints) {
+                if (!waypoints) return 0;
+                return waypoints.filter(w => w.reached_at).length;
             },
             
             // Playback State
@@ -480,6 +495,13 @@
                         // 1. Handle the Marker (The Vehicle Dot)
                         if (this.markers[vehicle.id]) {
                             this.markers[vehicle.id].setLatLng(coords);
+                            
+                            // Update tooltip with progress
+                            this.markers[vehicle.id].setTooltipContent(
+                                `<div>${vehicle.license_plate}</div>` + 
+                                (vehicle.active_route ? `<div style="color: #ff8a00; font-size: 8px; margin-top: 2px;">ROUTE: ${this.reachedCount(vehicle.active_route.waypoints)}/${vehicle.active_route.waypoints.length}</div>` : '')
+                            );
+
                             // Update rotation if heading exists
                             if (log.heading) {
                                 const iconElement = this.markers[vehicle.id].getElement();
@@ -510,12 +532,34 @@
 
                             this.markers[vehicle.id] = L.marker(coords, { icon })
                                 .addTo(this.map)
-                                .bindTooltip(vehicle.license_plate, {
-                                    permanent: true,
-                                    direction: 'top',
-                                    className: 'fleet-marker-label',
-                                    offset: [0, -10]
-                                });
+                                .bindTooltip(
+                                    `<div>${vehicle.license_plate}</div>` + 
+                                    (vehicle.active_route ? `<div style="color: #ff8a00; font-size: 8px; margin-top: 2px;">ROUTE: ${this.reachedCount(vehicle.active_route.waypoints)}/${vehicle.active_route.waypoints.length}</div>` : ''), 
+                                    {
+                                        permanent: true,
+                                        direction: 'top',
+                                        className: 'fleet-marker-label',
+                                        offset: [0, -10]
+                                    }
+                                );
+                        }
+
+                        // 3. Handle the Route Polyline (The Assigned Route)
+                        if (vehicle.active_route) {
+                            const routeLatLngs = vehicle.active_route.waypoints.map(wp => [wp.lat, wp.lng]);
+                            if (this.routePolylines[vehicle.id]) {
+                                this.routePolylines[vehicle.id].setLatLngs(routeLatLngs);
+                            } else {
+                                this.routePolylines[vehicle.id] = L.polyline(routeLatLngs, {
+                                    color: '#ff8a00',
+                                    weight: 2,
+                                    opacity: 0.4,
+                                    dashArray: '5, 5'
+                                }).addTo(this.map);
+                            }
+                        } else if (this.routePolylines[vehicle.id]) {
+                            this.map.removeLayer(this.routePolylines[vehicle.id]);
+                            delete this.routePolylines[vehicle.id];
                         }
 
                         // 2. Handle the Path (The Trail)

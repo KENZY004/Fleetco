@@ -12,6 +12,7 @@ class Vehicle extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'fleet_id',
         'name',
         'license_plate',
         'telemetry_token',
@@ -55,6 +56,16 @@ class Vehicle extends Model
     public function riskEvents(): HasMany
     {
         return $this->hasMany(RiskEvent::class);
+    }
+
+    public function activeRoute(): HasOne
+    {
+        return $this->hasOne(FleetRoute::class)->where('status', 'active');
+    }
+
+    public function fleet(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Fleet::class);
     }
 
     /**
