@@ -13,28 +13,26 @@
     }
 @endphp
 
-<div class="bg-white/5 rounded-3xl p-6 relative overflow-hidden border border-white/10 shadow-lg flex flex-col items-center">
-    <div class="w-full flex justify-between items-start mb-4">
-        <h2 class="font-bold text-lg text-white">Safety Score</h2>
-        <span class="text-xs px-2 py-1 rounded-full" style="background-color: {{ $color }}33; color: {{ $color }};">
-            {{ $statusText }}
-        </span>
-    </div>
+<div class="relative w-full max-w-[240px] mx-auto aspect-[2/1] overflow-hidden flex justify-center">
+    <svg viewBox="0 0 100 50" class="w-full h-full overflow-visible">
+        <!-- Track -->
+        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="3" stroke-linecap="round"></path>
+        
+        <!-- Value -->
+        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" 
+            stroke="{{ $score >= 80 ? '#10b981' : ($score >= 60 ? '#f59e0b' : '#f43f5e') }}" 
+            stroke-width="3.5" 
+            stroke-linecap="round"
+            stroke-dasharray="125.66"
+            style="--target-offset: {{ 125.66 - (125.66 * $score / 100) }}; stroke-dashoffset: 125.66; animation: fillGauge 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; filter: drop-shadow(0 0 8px currentColor);">
+        </path>
+    </svg>
 
-    <div class="relative w-full max-w-xs aspect-[2/1] overflow-hidden flex justify-center">
-        <svg viewBox="0 0 100 50" class="w-full h-full overflow-visible">
-            <!-- Track -->
-            <circle cx="50" cy="50" r="40" fill="none" stroke="#333" stroke-width="8" stroke-dasharray="125.66 125.66" transform="rotate(180 50 50)" stroke-linecap="round"></circle>
-            
-            <!-- Value -->
-            <circle cx="50" cy="50" r="40" fill="none" stroke="{{ $color }}" stroke-width="8" stroke-dasharray="125.66 125.66" stroke-linecap="round" transform="rotate(180 50 50)"
-                style="--target-offset: {{ $offset }}; stroke-dashoffset: 125.66; animation: fillGauge 1.5s ease-out forwards 0.2s;">
-            </circle>
-        </svg>
-
-        <!-- Score Text -->
-        <div class="absolute bottom-0 left-0 right-0 flex justify-center items-end pb-2">
-            <span class="text-5xl font-extrabold text-white">{{ $score }}</span>
+    <!-- Score Text -->
+    <div class="absolute inset-0 flex items-end justify-center pb-1">
+        <div class="text-center">
+            <div class="font-heading text-5xl font-black tracking-tight text-white leading-none">{{ number_format($score) }}</div>
+            <div class="text-[8px] font-black text-zinc-600 uppercase tracking-[0.3em] mt-1">Safety Index</div>
         </div>
     </div>
 </div>
@@ -42,9 +40,6 @@
 @pushOnce('styles')
 <style>
     @keyframes fillGauge {
-        from {
-            stroke-dashoffset: 125.66;
-        }
         to {
             stroke-dashoffset: var(--target-offset);
         }

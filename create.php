@@ -1,0 +1,1 @@
+﻿<?php \ = new \App\Models\FleetRoute(); \->fleet_id = 1; \->driver_id = 5; \->name = 'Test Route'; \->status = 'active'; \->waypoints = [['lat' => 34.0522, 'lng' => -118.2437, 'label' => 'Warehouse A', 'order' => 1]]; \->save(); echo 'OK';

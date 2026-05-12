@@ -13,7 +13,7 @@
         updateTimer() {
             if (this.status === 'on_duty' && this.startTime) {
                 let diff = Math.floor((Date.now() - this.startTime) / 1000);
-                if (diff < 0) diff = 0; // Prevent negative timer if clocks slightly out of sync
+                if (diff < 0) diff = 0;
                 let h = Math.floor(diff / 3600);
                 let m = Math.floor((diff % 3600) / 60);
                 let s = diff % 60;
@@ -24,15 +24,15 @@
         }
     }" 
     x-init="setInterval(() => updateTimer(), 1000); updateTimer();"
-    class="bg-white/5 rounded-3xl p-6 border border-white/10 shadow-lg">
+    class="w-full">
 
-    <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="grid grid-cols-3 gap-3 mb-8">
         <!-- On Duty -->
         <form action="{{ route('driver.duty.on') }}" method="POST" class="w-full">
             @csrf
             <button type="submit" 
-                class="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider transition-colors"
-                :class="status === 'on_duty' ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/10 text-white/50 hover:bg-white/20'">
+                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border"
+                :class="status === 'on_duty' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'">
                 On Duty
             </button>
         </form>
@@ -41,8 +41,8 @@
         <form action="{{ route('driver.duty.break') }}" method="POST" class="w-full">
             @csrf
             <button type="submit" 
-                class="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider transition-colors"
-                :class="status === 'break' ? 'bg-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.3)]' : 'bg-white/10 text-white/50 hover:bg-white/20'">
+                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border"
+                :class="status === 'break' ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'">
                 Break
             </button>
         </form>
@@ -51,15 +51,15 @@
         <form action="{{ route('driver.duty.off') }}" method="POST" class="w-full" onsubmit="return confirm('Are you sure you want to go OFF DUTY? This will end your current shift.');">
             @csrf
             <button type="submit" 
-                class="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-wider transition-colors"
-                :class="status === 'off_duty' ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-white/10 text-white/50 hover:bg-white/20'">
+                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border"
+                :class="status === 'off_duty' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'">
                 Off Duty
             </button>
         </form>
     </div>
 
-    <div class="flex justify-between items-center px-4 py-3 bg-black/30 rounded-xl border border-white/5">
-        <span class="text-sm font-bold text-white/50 uppercase tracking-widest">Shift Timer</span>
-        <span class="font-mono text-2xl font-bold" :class="status === 'on_duty' ? 'text-emerald-400' : 'text-white/30'" x-text="timer">00:00:00</span>
+    <div class="flex flex-col items-center gap-1">
+        <span class="text-[8px] font-black text-zinc-700 uppercase tracking-[0.4em]">Shift Chronometer</span>
+        <span class="font-heading text-4xl font-black tracking-tight leading-none" :class="status === 'on_duty' ? 'text-white' : 'text-zinc-800'" x-text="timer" x-init="$watch('timer', value => { if(document.getElementById('shift-timer-display')) document.getElementById('shift-timer-display').innerText = value })">00:00:00</span>
     </div>
 </div>

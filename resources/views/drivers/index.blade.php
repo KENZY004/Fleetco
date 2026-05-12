@@ -10,13 +10,6 @@
             <h1 class="font-heading text-3xl font-bold tracking-tight">Fleet Drivers</h1>
             <p class="text-zinc-500 text-sm mt-1">Manage personnel, safety scores and system access.</p>
         </div>
-        <button
-            @click="showAddModal = true"
-            class="flex items-center gap-3 px-6 py-3 bg-white text-black rounded-full text-[11px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95"
-        >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            Register Driver
-        </button>
     </div>
 
     {{-- Flash Messages --}}
@@ -41,18 +34,35 @@
             <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Driver Onboarding</div>
             <h2 class="font-heading text-lg font-bold mb-1">Invite a Driver</h2>
             <p class="text-sm text-zinc-500 mb-6">Send a secure invite link via email. Links expire after 48 hours.</p>
-            <form method="POST" action="{{ route('fleet.invite.send') }}" class="flex gap-3">
+            <form method="POST" action="{{ route('fleet.invite.send') }}" class="flex flex-col gap-3">
                 @csrf
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="driver@example.com"
-                    required
-                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors"
-                >
-                <button type="submit" class="px-6 py-3 bg-white text-black rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-zinc-200 transition-all active:scale-95 whitespace-nowrap">
-                    Send Invite
-                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Driver Full Name"
+                        required
+                        class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors"
+                    >
+                    <input
+                        type="text"
+                        name="license_number"
+                        placeholder="License Number (Optional)"
+                        class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors uppercase"
+                    >
+                </div>
+                <div class="flex gap-3">
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="driver@example.com"
+                        required
+                        class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors"
+                    >
+                    <button type="submit" class="px-6 py-3 bg-white text-black rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-zinc-200 transition-all active:scale-95 whitespace-nowrap">
+                        Send Invite
+                    </button>
+                </div>
             </form>
             @error('email')
                 <p class="text-red-400 text-xs mt-2">{{ $message }}</p>
@@ -190,43 +200,11 @@
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             </div>
             <div class="text-[11px] text-zinc-600 uppercase font-bold tracking-wider">No drivers registered</div>
-            <p class="text-zinc-700 text-sm mt-2">Click "Register Driver" to add your first operator.</p>
+            <p class="text-zinc-700 text-sm mt-2">Use the "Invite a Driver" form above to add your first operator.</p>
         </div>
         @endforelse
     </div>
 
-    {{-- ADD DRIVER MODAL --}}
-    <x-fleet-modal name="showAddModal" title="Register New Driver" subtitle="Operator Management">
-        <form method="POST" action="{{ route('drivers.store') }}" class="space-y-5">
-            @csrf
-            <div>
-                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Full Name</label>
-                <input type="text" name="name" required placeholder="e.g. John Doe" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Phone Number</label>
-                <input type="text" name="phone_number" placeholder="+1 (555) 000-0000" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">License Number</label>
-                <input type="text" name="license_number" placeholder="DL-123456789" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-primary/50 transition-colors uppercase">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Link User Account</label>
-                <select name="user_id" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
-                    <option value="">— Don't link —</option>
-                    @foreach($unlinkedUsers as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
-                    @endforeach
-                </select>
-                <p class="text-[10px] text-zinc-600 mt-2">Only accounts with role 'driver' are shown.</p>
-            </div>
-            <div class="flex gap-4 pt-2">
-                <button type="button" @click="showAddModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
-                <button type="submit" class="flex-1 py-4 bg-white text-black rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all">Register</button>
-            </div>
-        </form>
-    </x-fleet-modal>
 
     {{-- EDIT DRIVER MODAL --}}
     <x-fleet-modal name="showEditModal" title="Edit Driver Profile" subtitle="Operator Management">

@@ -1,19 +1,21 @@
 <x-guest-layout>
-    <div class="flex flex-col lg:flex-row">
-        <!-- Sidebar Image -->
-        <div class="hidden lg:block w-5/12 relative">
-            <img src="/auth_sidebar.png" alt="Fleetco" class="absolute inset-0 w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-r from-transparent to-[#08080c]"></div>
-            <div class="absolute bottom-12 left-12 right-12">
-                <h3 class="font-heading text-2xl font-bold text-white mb-3">You're invited.</h3>
-                <p class="text-sm text-zinc-400 leading-relaxed">
-                    Your fleet manager has sent you a secure invitation. Set up your driver account to get started.
-                </p>
-            </div>
-        </div>
+    <div class="w-full max-w-4xl relative z-10">
+        <div class="glass-obsidian rounded-[2rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+            <div class="flex flex-col lg:flex-row">
+                <!-- Sidebar Image -->
+                <div class="hidden lg:block w-5/12 relative">
+                    <img src="/auth_sidebar.png" alt="Fleetco" class="absolute inset-0 w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent to-[#08080c]"></div>
+                    <div class="absolute bottom-12 left-12 right-12">
+                        <h3 class="font-heading text-2xl font-bold text-white mb-3">You're invited.</h3>
+                        <p class="text-sm text-zinc-400 leading-relaxed">
+                            Your fleet manager has sent you a secure invitation. Set up your driver account to get started.
+                        </p>
+                    </div>
+                </div>
 
-        <!-- Form Content -->
-        <div class="w-full lg:w-7/12 p-8 lg:p-20 flex flex-col justify-center">
+                <!-- Form Content -->
+                <div class="w-full lg:w-7/12 p-8 lg:p-12 flex flex-col justify-center">
             <div class="mb-10">
                 {{-- DRIVER INVITE BADGE --}}
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 mb-6">
@@ -41,16 +43,19 @@
                 @csrf
                 <input type="hidden" name="token" value="{{ $invitation->token }}">
 
+                {{-- Pre-filled Info --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label for="first_name" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">First Name</label>
-                        <x-text-input id="first_name" class="block w-full px-4 py-3" type="text" name="first_name" :value="old('first_name')" required autofocus placeholder="First name" />
-                        <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Assigned Name</label>
+                        <div class="px-4 py-3 bg-white/3 border border-white/10 rounded-xl text-white text-sm opacity-70">
+                            {{ $invitation->name }}
+                        </div>
                     </div>
                     <div>
-                        <label for="last_name" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Last Name</label>
-                        <x-text-input id="last_name" class="block w-full px-4 py-3" type="text" name="last_name" :value="old('last_name')" required placeholder="Last name" />
-                        <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">License Number</label>
+                        <div class="px-4 py-3 bg-white/3 border border-white/10 rounded-xl text-white text-sm opacity-70">
+                            {{ $invitation->license_number ?? 'Not Required' }}
+                        </div>
                     </div>
                 </div>
 
@@ -85,4 +90,6 @@
             </form>
         </div>
     </div>
+</div>
+</div>
 </x-guest-layout>

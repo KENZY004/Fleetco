@@ -7,6 +7,10 @@
         @apply bg-[#020202] text-white antialiased;
         font-family: 'Inter', sans-serif;
     }
+
+    .font-heading {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
 }
 
 @layer components {

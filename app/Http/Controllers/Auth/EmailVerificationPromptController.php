@@ -14,6 +14,11 @@ class EmailVerificationPromptController extends Controller
      */
     public function __invoke(Request $request): RedirectResponse|View
     {
+        // Admins are pre-verified — never block them with email verification
+        if ($request->user()->role === 'admin') {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
         return $request->user()->hasVerifiedEmail()
                     ? redirect()->intended(route('dashboard', absolute: false))
                     : view('auth.verify-email');

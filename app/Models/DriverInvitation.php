@@ -10,6 +10,8 @@ class DriverInvitation extends Model
         'fleet_id',
         'invited_by',
         'email',
+        'name',
+        'license_number',
         'token',
         'expires_at',
         'accepted_at',

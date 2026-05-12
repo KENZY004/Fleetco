@@ -13,8 +13,9 @@
         </div>
 
         <!-- Form Content -->
-        <div class="w-full lg:w-7/12 p-8 lg:p-20 flex flex-col justify-center">
-        <div class="mb-10">
+        <!-- Form Content -->
+        <div class="w-full lg:w-7/12 p-8 lg:p-12 flex flex-col justify-center">
+        <div class="mb-4">
             {{-- FLEET MANAGER ACCOUNT PILL --}}
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-500/30 bg-orange-500/10 mb-6">
                 <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
@@ -27,7 +28,7 @@
             </p>
         </div>
 
-            <form method="POST" action="{{ route('register') }}" class="space-y-6">
+            <form method="POST" action="{{ route('register') }}" class="space-y-3">
                 @csrf
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">

@@ -21,7 +21,7 @@
 <body class="antialiased h-screen flex bg-[#020202] text-white overflow-hidden">
 
     <!-- Slim Operations Sidebar (Desktop) -->
-    <aside class="hidden md:flex w-24 flex-shrink-0 glass-obsidian border-r border-white/5 flex-col items-center py-8 z-[3000]">
+    <aside class="hidden md:flex w-24 flex-shrink-0 glass-obsidian border-r border-white/5 flex-col items-center py-4 z-[3000]">
         <!-- Brand -->
         <a href="{{ route('dashboard') }}" class="mb-12 group">
             <div class="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 transition-transform group-hover:scale-105">
@@ -30,7 +30,7 @@
         </a>
 
         <!-- Navigation Links -->
-        <nav class="flex-1 flex flex-col gap-8 w-full items-center">
+        <nav class="flex-1 flex flex-col gap-4 w-full items-center overflow-y-auto custom-scrollbar px-2 py-4">
             <x-nav-link-sidebar icon="dashboard" route="dashboard" label="HQ" />
             <x-nav-link-sidebar icon="driver" route="drivers.index" label="Ops" />
             <x-nav-link-sidebar icon="vehicle" route="vehicles.index" label="Fleet" />

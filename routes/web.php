@@ -56,10 +56,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/verifications', [App\Http\Controllers\AdminVerificationsController::class, 'index'])->name('admin.verifications.index');
         Route::post('/admin/verifications/{user}/force', [App\Http\Controllers\AdminVerificationsController::class, 'forceVerify'])->name('admin.verifications.force');
 
-        // Fleet Manager invitation (requires verified email)
-        Route::middleware(['verified'])->group(function () {
-            Route::post('/fleet/invite/send', [App\Http\Controllers\InviteController::class, 'send'])->name('fleet.invite.send');
-        });
+        // Fleet Manager invitation
+        Route::post('/fleet/invite/send', [App\Http\Controllers\InviteController::class, 'send'])->name('fleet.invite.send');
     });
 
     // Driver Co-Pilot Routes

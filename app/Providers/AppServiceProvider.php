@@ -22,9 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if ($this->app->environment('production')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-        }
+        \Illuminate\Support\Facades\URL::forceScheme('https');
 
         RateLimiter::for('telematics', function (Request $request) {
             return Limit::perMinute(60)->by($request->token);

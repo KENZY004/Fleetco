@@ -26,7 +26,9 @@ class InviteController extends Controller
     public function send(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'email'          => ['required', 'string', 'email', 'max:255'],
+            'name'           => ['required', 'string', 'max:255'],
+            'license_number' => ['nullable', 'string', 'max:255'],
         ]);
 
         $manager = $request->user();
@@ -37,20 +39,23 @@ class InviteController extends Controller
         // Create invitation (or update if pending for same email+fleet)
         $invitation = DriverInvitation::updateOrCreate(
             [
-                'fleet_id'   => $manager->fleet_id,
-                'email'      => $request->email,
+                'fleet_id'       => $manager->fleet_id,
+                'email'          => $request->email,
             ],
             [
-                'invited_by' => $manager->id,
-                'token'      => $token,
-                'expires_at' => now()->addHours(48),
-                'accepted_at'=> null,
+                'invited_by'     => $manager->id,
+                'name'           => $request->name,
+                'license_number' => $request->license_number,
+                'token'          => $token,
+                'expires_at'     => now()->addHours(48),
+                'accepted_at'    => null,
             ]
         );
 
         Mail::to($request->email)->send(new DriverInvitationMail($invitation, $manager));
 
-        return back()->with('success', "Invitation sent to {$request->email}. Link expires in 48 hours.");
+        return redirect()->route('drivers.index')
+            ->with('success', "✓ Invite sent to {$request->email}. Awaiting driver confirmation.");
     }
 
     /**
@@ -86,8 +91,6 @@ class InviteController extends Controller
 
         $request->validate([
             'token'      => ['required', 'string'],
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name'  => ['required', 'string', 'max:255'],
             'email'      => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password'   => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -101,9 +104,7 @@ class InviteController extends Controller
         }
 
         $user = User::create([
-            'first_name'        => $request->first_name,
-            'last_name'         => $request->last_name,
-            'name'              => $request->first_name . ' ' . $request->last_name,
+            'name'              => $invitation->name,
             'email'             => $request->email,
             'password'          => Hash::make($request->password),
             'role'              => 'driver',
@@ -114,10 +115,11 @@ class InviteController extends Controller
 
         // Auto-create the Driver profile so they appear in the fleet's driver list
         Driver::create([
-            'user_id'    => $user->id,
-            'fleet_id'   => $invitation->fleet_id,
-            'name'       => $user->name,
-            'risk_score' => 100, // Start with a perfect safety score
+            'user_id'        => $user->id,
+            'fleet_id'       => $invitation->fleet_id,
+            'name'           => $user->name,
+            'license_number' => $invitation->license_number,
+            'risk_score'     => 100, // Start with a perfect safety score
         ]);
 
         // Mark invitation as accepted

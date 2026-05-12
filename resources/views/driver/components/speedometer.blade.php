@@ -110,38 +110,65 @@
                 })
             }).catch(e => console.error('Telemetry post failed:', e));
         }
-    }"
-    class="bg-white/5 rounded-3xl p-6 border border-white/10 shadow-lg relative overflow-hidden flex flex-col items-center justify-center min-h-[250px] transition-colors duration-500"
-    :class="isSpeeding ? 'bg-red-500/20 border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.3)]' : ''"
->
-    <!-- Speedometer SVG -->
-    <div class="relative w-48 h-48 flex items-center justify-center">
-        <!-- Background ring -->
-        <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full transform -rotate-90">
-            <circle cx="50" cy="50" r="45" fill="none" class="stroke-white/10" stroke-width="4"/>
-            <!-- Value ring (282.74 is 2*pi*45) -->
-            <circle cx="50" cy="50" r="45" fill="none" 
-                :class="isSpeeding ? 'stroke-red-500' : 'stroke-emerald-400'" 
-                stroke-width="6" 
-                stroke-dasharray="282.74"
-                :stroke-dashoffset="282.74 - (282.74 * Math.min(speedKmh, 160) / 160)"
-                class="transition-all duration-300 ease-out"
-                stroke-linecap="round"/>
+    }">
+    <div class="relative w-44 h-44 flex items-center justify-center mx-auto">
+        <!-- Digital Gauge Background -->
+        <svg viewBox="0 0 100 100" class="absolute inset-0 w-full h-full transform -rotate-90 overflow-visible">
+            <!-- Subtle Ticks -->
+            @for ($i = 0; $i < 30; $i++)
+                <line x1="50" y1="5" x2="50" y2="8" 
+                      stroke="rgba(255,255,255,0.05)" 
+                      stroke-width="0.5" 
+                      transform="rotate({{ $i * 12 }} 50 50)" />
+            @endfor
+
+            <!-- Track -->
+            <circle cx="50" cy="50" r="44" fill="none" class="stroke-white/[0.02]" stroke-width="1"/>
+            
+            <!-- Glow Value Ring -->
+            <circle cx="50" cy="50" r="44" fill="none" 
+                :class="isSpeeding ? 'stroke-rose-500' : 'stroke-orange-500'" 
+                stroke-width="2" 
+                stroke-dasharray="276"
+                :stroke-dashoffset="276 - (276 * Math.min(speedKmh, 160) / 160)"
+                class="transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1)"
+                stroke-linecap="round"
+                style="filter: drop-shadow(0 0 12px currentColor); opacity: 0.8;"/>
         </svg>
         
         <div class="flex flex-col items-center z-10">
-            <span class="text-6xl font-extrabold font-mono tracking-tighter" :class="isSpeeding ? 'text-red-400' : 'text-white'" x-text="speedKmh">0</span>
-            <span class="text-xs font-bold text-white/40 uppercase tracking-widest mt-1">KM/H</span>
+            <div class="flex items-baseline">
+                <span class="font-heading text-7xl font-extrabold tracking-tighter transition-colors duration-500 leading-none" :class="isSpeeding ? 'text-rose-500' : 'text-white'" x-text="speedKmh">0</span>
+            </div>
+            <span class="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em] mt-1">KM/H</span>
+        </div>
+        
+        <!-- Professional Offline State -->
+        <div x-show="!isOnDuty" x-transition class="absolute inset-0 flex items-center justify-center z-20">
+            <div class="bg-black/40 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/5 text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] shadow-2xl">
+                Offline
+            </div>
         </div>
     </div>
     
-    <div class="mt-4 flex items-center gap-2">
-        <span class="text-xs font-bold text-white/50 uppercase">Limit: {{ $speedLimit }}</span>
-        <div x-show="isSpeeding" style="display: none;" class="px-2 py-1 bg-red-500 rounded text-[10px] font-bold text-white uppercase animate-pulse">Overspeed</div>
-    </div>
-
-    <div x-show="!isOnDuty" class="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
-        <span class="text-white/80 font-bold uppercase tracking-widest text-sm">Offline</span>
+    <div class="mt-8 flex flex-col items-center">
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-center">
+                <span class="text-[8px] font-black text-zinc-700 uppercase tracking-[0.2em] mb-1">Limit</span>
+                <span class="text-xs font-bold text-zinc-400 font-heading tracking-tight">{{ $speedLimit }}</span>
+            </div>
+            
+            <div class="w-px h-6 bg-white/5"></div>
+            
+            <div x-show="isSpeeding" style="display: none;" class="flex items-center gap-2">
+                <div class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></div>
+                <span class="text-[9px] font-black text-rose-500 uppercase tracking-[0.2em]">Breach</span>
+            </div>
+            <div x-show="!isSpeeding" class="flex items-center gap-2">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500/50"></div>
+                <span class="text-[9px] font-black text-zinc-700 uppercase tracking-[0.2em]">Optimal</span>
+            </div>
+        </div>
     </div>
 </div>
 

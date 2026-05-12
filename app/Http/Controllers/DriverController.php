@@ -93,10 +93,18 @@ class DriverController extends Controller
 
     public function destroy(Driver $driver): RedirectResponse
     {
+        // Unassign from vehicle
         $this->vehicleRepo->unassignDriverFromOthers($driver->id, 0);
+
+        // Delete the associated User account (the login)
+        if ($driver->user_id) {
+            $driver->user()->delete();
+        }
+
+        // Delete the Driver profile
         $this->driverRepo->delete($driver);
 
-        return redirect()->route('drivers.index')->with('success', 'Driver removed from system.');
+        return redirect()->route('drivers.index')->with('success', 'Driver and associated account wiped from system.');
     }
 
     public function resetScore(Driver $driver): RedirectResponse

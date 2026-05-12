@@ -13,8 +13,8 @@
         </div>
 
         <!-- Form Content -->
-        <div class="w-full lg:w-7/12 p-8 lg:p-20 flex flex-col justify-center">
-            <div class="mb-10">
+        <div class="w-full lg:w-7/12 p-8 lg:p-12 flex flex-col justify-center">
+            <div class="mb-4">
                 <h2 class="font-heading text-3xl font-bold text-white mb-2">Sign in</h2>
                 <p class="text-sm text-zinc-500">
                     New to Fleetco? 
@@ -24,7 +24,7 @@
 
             <x-auth-session-status class="mb-4" :status="session('status')" />
 
-            <form method="POST" action="{{ route('login') }}" class="space-y-6">
+            <form method="POST" action="{{ route('login') }}" class="space-y-3">
                 @csrf
 
                 <div>
