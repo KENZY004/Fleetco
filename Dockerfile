@@ -32,7 +32,7 @@ COPY . /var/www
 
 # Install PHP and Node dependencies
 RUN composer install --optimize-autoloader --no-dev
-RUN npm install && npm run build
+RUN rm -f package-lock.json && npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
