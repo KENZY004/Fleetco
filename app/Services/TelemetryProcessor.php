@@ -140,6 +140,8 @@ class TelemetryProcessor
                 'occurred_at' => $log->captured_at,
             ]);
         }
+    }
+
     public function stopSession(Vehicle $vehicle): void
     {
         $currentTrip = Trip::where('vehicle_id', $vehicle->id)
