@@ -35,7 +35,8 @@ RUN composer install --optimize-autoloader --no-dev
 RUN rm -f package-lock.json && npm install && npm run build
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache && \
+    chmod -R 777 /var/www/storage /var/www/bootstrap/cache
 
 # Copy Nginx and Supervisor configurations
 COPY .render/nginx.conf /etc/nginx/sites-available/default
