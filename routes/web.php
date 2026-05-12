@@ -15,6 +15,24 @@ Route::get('/', function () {
     return view('landing');
 })->name('landing');
 
+// Temporary debug route for Render Free Tier - DELETE AFTER USE
+Route::get('/debug-db-fix', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'FleetSeeder']);
+        $users = \App\Models\User::all(['name', 'email', 'role']);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Database seeded and users retrieved',
+            'users' => $users
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
 Route::middleware(['auth'])->group(function () {
     // Admin & Fleet Manager Routes
     Route::middleware(['admin'])->group(function () {
