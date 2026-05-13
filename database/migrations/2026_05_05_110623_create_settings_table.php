@@ -21,7 +21,7 @@ return new class extends Migration
             ['key' => 'company_name', 'value' => 'Fleetco Logistics', 'type' => 'string'],
             ['key' => 'speed_limit', 'value' => '80', 'type' => 'int'],
             ['key' => 'simulation_enabled', 'value' => '0', 'type' => 'boolean'],
-            ['key' => 'alert_email', 'value' => 'admin@fleetco.com', 'type' => 'string'],
+            ['key' => 'alert_email', 'value' => 'fleetcosupport@gmail.com', 'type' => 'string'],
         ]);
     }
 

@@ -11,13 +11,13 @@ class FleetSeeder extends Seeder
     public function run(): void
     {
         // Create initial Admin user (only if not already exists)
-        if (!User::where('email', 'admin@fleetco.com')->exists()) {
+        if (!User::where('email', 'fleetcosupport@gmail.com')->exists()) {
             User::create([
                 'first_name' => 'Fleet',
-                'last_name'  => 'Commander',
-                'name'       => 'Fleet Commander',
-                'email'      => 'admin@fleetco.com',
-                'password'   => Hash::make('password'),
+                'last_name'  => 'Administrator',
+                'name'       => 'Fleet Administrator',
+                'email'      => 'fleetcosupport@gmail.com',
+                'password'   => Hash::make('Fleetco@MinVa'),
                 'role'       => 'admin',
             ]);
         }

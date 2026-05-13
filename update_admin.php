@@ -9,7 +9,7 @@ $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $user = User::where('email', 'admin@fleetco.com')->first();
 
 if (!$user) {
-    $user = User::where('email', 'fleetco.support@gmail.com')->first();
+    $user = User::where('email', 'fleetcosupport@gmail.com')->first();
 }
 
 if (!$user) {
@@ -17,7 +17,7 @@ if (!$user) {
 }
 
 $user->name = 'Fleetco Administrator';
-$user->email = 'fleetco.support@gmail.com';
+$user->email = 'fleetcosupport@gmail.com';
 $user->password = Hash::make('Fleetco@MinVa');
 $user->role = 'admin';
 $user->email_verified_at = now();
