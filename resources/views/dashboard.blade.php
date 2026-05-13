@@ -318,7 +318,7 @@
             paths: {}, // Store live paths
             selectedVehicle: null,
             inspectingAlert: null,
-            routePolylines: {}, // Store route polylines
+            routePolylines: {},
             forensicMap: null,
             forensicMarker: null,
             searchQuery: '',
@@ -430,7 +430,12 @@
                             if (vehicle) {
                                 this.selectVehicle(vehicle);
                             }
+                            // Clean up URL so refresh doesn't trigger this again
+                            window.history.replaceState({}, document.title, "/dashboard");
                         }, 1000);
+                    } else {
+                        // FORCE CLOSE MODAL ON STARTUP just in case
+                        this.inspectingAlert = null;
                     }
                 });
             },
