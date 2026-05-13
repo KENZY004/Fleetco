@@ -10,17 +10,21 @@ class FleetSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create initial Admin user (only if not already exists)
-        if (!User::where('email', 'fleetcosupport@gmail.com')->exists()) {
-            User::create([
+        // Remove legacy admin if exists
+        User::where('email', 'admin@fleetco.com')->delete();
+
+        // Create initial Admin user (ensure fleetcosupport@gmail.com is the only admin)
+        User::updateOrCreate(
+            ['email' => 'fleetcosupport@gmail.com'],
+            [
                 'first_name' => 'Fleet',
                 'last_name'  => 'Administrator',
                 'name'       => 'Fleet Administrator',
-                'email'      => 'fleetcosupport@gmail.com',
                 'password'   => Hash::make('Fleetco@MinVa'),
                 'role'       => 'admin',
-            ]);
-        }
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Add active test route for the driver
         $driver = User::where('email', 'kenzninnu409@gmail.com')->first();

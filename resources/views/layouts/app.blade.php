@@ -39,7 +39,11 @@
             <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
             <x-nav-link-sidebar icon="geofence" route="geofences.index" label="Zones" />
             <x-nav-link-sidebar icon="mobile" route="track-me" label="Link" />
+            @if(auth()->user()->role === 'admin')
+                <x-nav-link-sidebar icon="admin" route="admin.verifications.index" label="Admin" />
+            @endif
         </nav>
+
 
         <!-- Profile / Logout -->
         <div class="mt-auto flex flex-col gap-6 items-center" x-data="{ open: false }">
@@ -69,7 +73,11 @@
         <x-nav-link-sidebar icon="vehicle" route="vehicles.index" label="Fleet" />
         <x-nav-link-sidebar icon="trips" route="trips.index" label="Trips" />
         <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
+        @if(auth()->user()->role === 'admin')
+            <x-nav-link-sidebar icon="admin" route="admin.verifications.index" label="Admin" />
+        @endif
     </nav>
+
 
     <!-- Content Matrix -->
     <main class="flex-1 relative min-w-0 @yield('main-class', 'p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto bg-[#020202] custom-scrollbar')">
