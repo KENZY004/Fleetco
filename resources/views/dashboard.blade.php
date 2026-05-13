@@ -133,6 +133,8 @@
     <!-- 5. BOTTOM HUD: Selection Profile -->
     <div 
         x-show="selectedVehicle"
+        x-cloak
+        style="display: none;"
         x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-8"
         class="absolute bottom-24 md:bottom-10 left-4 md:left-80 right-4 md:right-96 z-[1001] pointer-events-auto"
@@ -363,8 +365,15 @@
             isFollowing: false,
 
             init() {
+                console.log('Dashboard Initializing...');
                 this.$nextTick(() => {
-                    this.initMap();
+                    try {
+                        this.initMap();
+                        this.systemStatus = 'Map Ready';
+                    } catch (e) {
+                        console.error('Map Engine Failed:', e);
+                        this.systemStatus = 'Map Error - UI Only';
+                    }
                     this.startPolling();
                     
                     // Request notification permission
