@@ -458,9 +458,9 @@
                     fadeAnimation: true,
                 }).setView([19.0760, 72.8777], 11);
 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20,
-                    attribution: ''
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap contributors'
                 }).addTo(this.map);
 
                 this.map.on('move', () => {

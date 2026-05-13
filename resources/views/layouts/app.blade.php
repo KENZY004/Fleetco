@@ -47,10 +47,10 @@
         <!-- Profile / Logout -->
         <div class="mt-auto flex flex-col gap-6 items-center" x-data="{ open: false }">
             <div class="relative">
-                <button @click="open = !open" class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:border-orange-500/50 transition-colors">
+                <button @click.stop="open = !open" class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:border-orange-500/50 transition-colors">
                     <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 </button>
-                <div x-show="open" @click.away="open = false" class="absolute bottom-0 left-16 w-48 glass-obsidian rounded-2xl p-2 shadow-2xl border border-white/10" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-x-4">
+                <div x-show="open" @click.outside="open = false" @keydown.escape.window="open = false" class="absolute bottom-0 left-16 w-48 glass-obsidian rounded-2xl p-2 shadow-2xl border border-white/10" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-x-4" x-cloak>
                     <div class="px-4 py-2 border-b border-white/5 mb-2">
                         <div class="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">Admin</div>
                         <div class="text-[10px] font-bold text-white truncate">{{ Auth::user()->name }}</div>

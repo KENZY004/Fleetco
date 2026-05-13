@@ -130,8 +130,9 @@
                     attributionControl: false
                 }).setView([31.3831, 75.3857], 13);
 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap contributors'
                 }).addTo(this.map);
 
                 // Add zoom control to right
