@@ -315,7 +315,8 @@
 
 @push('scripts')
 <script>
-    function fleetDashboard() {
+    // DEFINE THE BRAIN GLOBALLY SO BROWSER FINDS IT INSTANTLY
+    window.fleetDashboard = function() {
         return {
             map: null,
             markers: {},

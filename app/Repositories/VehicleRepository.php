@@ -12,7 +12,9 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        $fleetId = auth()->user()?->fleet_id;
+        $user = auth()->user();
+        $fleetId = $user?->fleet_id;
+        
         $vehicles = Vehicle::with(['driver', 'latestTelematics', 'activeRoute'])
             ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
             ->get();
