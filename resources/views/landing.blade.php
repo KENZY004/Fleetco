@@ -92,6 +92,12 @@
                             <span class="relative z-10 text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-white group-hover:text-black transition-colors duration-500">Enter Co-Pilot Hub</span>
                         </a>
                     @endif
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-zinc-600 hover:text-white transition-colors ml-4">
+                            Logout
+                        </button>
+                    </form>
                 @else
                     <a href="{{ route('login') }}" class="text-[8px] md:text-[9px] font-black uppercase tracking-[0.4em] text-zinc-400 hover:text-white transition-colors">Login</a>
                     <a href="{{ route('register') }}" class="group relative px-6 md:px-8 py-3 overflow-hidden rounded-full border border-orange-500/30 active:scale-95 transition-all">

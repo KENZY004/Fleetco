@@ -179,6 +179,7 @@
         x-transition:enter-end="opacity-100 scale-100"
         class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
         @click.self="inspectingAlert = null"
+        @keydown.escape.window="inspectingAlert = null"
     >
         <div class="glass-obsidian rounded-[3rem] w-full max-w-4xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex h-[700px]">
             {{-- Left Side: Forensic Map --}}
