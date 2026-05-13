@@ -1,5 +1,53 @@
 @extends('layouts.app')
 
+<script>
+    // DEFINE THE DASHBOARD BRAIN AT THE TOP SO IT LOADS BEFORE ALPINE STARTS
+    window.fleetDashboard = function() {
+        return {
+            map: null,
+            markers: {},
+            paths: {},
+            selectedVehicle: null,
+            inspectingAlert: null,
+            routePolylines: {},
+            forensicMap: null,
+            forensicMarker: null,
+            searchQuery: '',
+            statusFilter: 'all',
+            resolutionNote: '',
+            vehicles: @json($vehicles),
+            geofences: @json($geofences),
+            viewportCoords: '00.0000° N, 00.0000° E',
+            haversineDistance: 0,
+            systemStatus: 'Connecting...',
+            lastPingTime: 'None',
+            recentAlerts: @json($recentAlerts),
+            isFleetListOpen: false,
+            isMobile: window.innerWidth < 768,
+
+            init() {
+                const setup = () => {
+                    console.log('Dashboard Initializing...');
+                    this.$nextTick(() => {
+                        try {
+                            this.initMap();
+                            this.systemStatus = 'Map Ready';
+                        } catch (e) {
+                            console.error('Map Engine Failed:', e);
+                            this.systemStatus = 'Map Error';
+                        }
+                        this.startPolling();
+                    });
+                };
+
+                // Safety: Setup immediately if page is already loaded, otherwise wait
+                if (document.readyState === 'complete') {
+                    setup();
+                } else {
+                    window.addEventListener('load', setup);
+                }
+            },
+
 @section('main-class', '')
 
 @section('content')
@@ -313,10 +361,7 @@
     }
 </style>
 
-@push('scripts')
-<script>
-    // DEFINE THE BRAIN GLOBALLY SO BROWSER FINDS IT INSTANTLY
-    window.fleetDashboard = function() {
+    window.OLD_fleetDashboard = function() {
         return {
             map: null,
             markers: {},
