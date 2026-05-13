@@ -125,10 +125,11 @@
             existingGeofences: @json($geofences),
 
             init() {
-                this.map = L.map('geofenceMap', {
-                    zoomControl: false,
-                    attributionControl: false
-                }).setView([31.3831, 75.3857], 13);
+                window.addEventListener('load', () => {
+                    this.map = L.map('geofenceMap', {
+                        zoomControl: false,
+                        attributionControl: false
+                    }).setView([31.3831, 75.3857], 13);
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,

@@ -365,16 +365,20 @@
             isFollowing: false,
 
             init() {
-                console.log('Dashboard Initializing...');
-                this.$nextTick(() => {
-                    try {
-                        this.initMap();
-                        this.systemStatus = 'Map Ready';
-                    } catch (e) {
-                        console.error('Map Engine Failed:', e);
-                        this.systemStatus = 'Map Error - UI Only';
-                    }
-                    this.startPolling();
+                window.addEventListener('load', () => {
+                    console.log('Dashboard Initializing...');
+                    this.$nextTick(() => {
+                        try {
+                            this.initMap();
+                            this.systemStatus = 'Map Ready';
+                        } catch (e) {
+                            console.error('Map Engine Failed:', e);
+                            this.systemStatus = 'Map Error';
+                        }
+                        this.startPolling();
+                    });
+                });
+            },
                     
                     // Request notification permission
                     if ("Notification" in window && Notification.permission === "default") {
