@@ -16,6 +16,7 @@
 
     <style>
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="antialiased h-screen flex bg-[#020202] text-white overflow-hidden">
