@@ -27,6 +27,7 @@ return [
             'prefix_indexes' => true,
             'search_path' => env('DB_SEARCH_PATH', 'public,extensions,topology'),
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslrootcert' => env('DB_SSLROOTCERT', 'disable'),
             'prepared_statements' => false,
         ],
 

@@ -45,5 +45,9 @@ COPY .render/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Expose Nginx port
 EXPOSE 80
 
-# Start Supervisor (manages Nginx, PHP-FPM, and Reverb WebSockets)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start: Run Laravel bootstrap tasks then hand off to Supervisor
+CMD php /var/www/artisan config:cache && \
+    php /var/www/artisan route:cache && \
+    php /var/www/artisan view:cache && \
+    php /var/www/artisan migrate --force && \
+    /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
