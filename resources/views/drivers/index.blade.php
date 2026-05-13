@@ -36,7 +36,7 @@
             <p class="text-sm text-zinc-500 mb-6">Send a secure invite link via email. Links expire after 48 hours.</p>
             <form method="POST" action="{{ route('fleet.invite.send') }}" class="flex flex-col gap-3">
                 @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <input
                         type="text"
                         name="name"
@@ -47,7 +47,13 @@
                     <input
                         type="text"
                         name="license_number"
-                        placeholder="License Number (Optional)"
+                        placeholder="License Number (DL)"
+                        class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors uppercase"
+                    >
+                    <input
+                        type="text"
+                        name="plate_number"
+                        placeholder="Vehicle Plate No"
                         class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm outline-none focus:border-orange-500/50 transition-colors uppercase"
                     >
                 </div>

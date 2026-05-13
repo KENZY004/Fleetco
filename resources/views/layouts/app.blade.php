@@ -39,9 +39,7 @@
             <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
             <x-nav-link-sidebar icon="geofence" route="geofences.index" label="Zones" />
             <x-nav-link-sidebar icon="mobile" route="track-me" label="Link" />
-            @if(auth()->user()->role === 'admin')
-                <x-nav-link-sidebar icon="admin" route="admin.verifications.index" label="Admin" />
-            @endif
+
         </nav>
 
 
@@ -53,7 +51,7 @@
                 </button>
                 <div x-show="open" @click.away="open = false" class="absolute bottom-0 left-16 w-48 glass-obsidian rounded-2xl p-2 shadow-2xl border border-white/10" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-x-4">
                     <div class="px-4 py-2 border-b border-white/5 mb-2">
-                        <div class="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">System_Admin</div>
+                        <div class="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">Admin</div>
                         <div class="text-[10px] font-bold text-white truncate">{{ Auth::user()->name }}</div>
                     </div>
                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:bg-white/5 hover:text-white rounded-xl">Settings</a>
@@ -73,9 +71,7 @@
         <x-nav-link-sidebar icon="vehicle" route="vehicles.index" label="Fleet" />
         <x-nav-link-sidebar icon="trips" route="trips.index" label="Trips" />
         <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
-        @if(auth()->user()->role === 'admin')
-            <x-nav-link-sidebar icon="admin" route="admin.verifications.index" label="Admin" />
-        @endif
+
     </nav>
 
 

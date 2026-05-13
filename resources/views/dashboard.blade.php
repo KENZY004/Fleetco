@@ -677,7 +677,7 @@
                     } catch (error) {
                         console.error('Polling error:', error);
                     }
-                }, 5000);
+                }, 15000);
             },
 
             async visualiseMission() {

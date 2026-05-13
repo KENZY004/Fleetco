@@ -23,15 +23,26 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone_number' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $user->fill($validated);
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
 
         $user->save();
+
+        // Update the driver profile phone number
+        if ($user->driver) {
+            $user->driver->update([
+                'phone_number' => $validated['phone_number'],
+            ]);
+        }
 
         return redirect()->route('driver.profile')->with('status', 'profile-updated');
     }

@@ -29,6 +29,7 @@ class InviteController extends Controller
             'email'          => ['required', 'string', 'email', 'max:255'],
             'name'           => ['required', 'string', 'max:255'],
             'license_number' => ['nullable', 'string', 'max:255'],
+            'plate_number'   => ['nullable', 'string', 'max:255'],
         ]);
 
         $manager = $request->user();
@@ -46,6 +47,7 @@ class InviteController extends Controller
                 'invited_by'     => $manager->id,
                 'name'           => $request->name,
                 'license_number' => $request->license_number,
+                'plate_number'   => $request->plate_number,
                 'token'          => $token,
                 'expires_at'     => now()->addHours(48),
                 'accepted_at'    => null,
@@ -114,13 +116,27 @@ class InviteController extends Controller
         ]);
 
         // Auto-create the Driver profile so they appear in the fleet's driver list
-        Driver::create([
+        $driver = Driver::create([
             'user_id'        => $user->id,
             'fleet_id'       => $invitation->fleet_id,
             'name'           => $user->name,
             'license_number' => $invitation->license_number,
-            'risk_score'     => 100, // Start with a perfect safety score
+            'risk_score'     => 100,
         ]);
+
+        // Auto-assign vehicle if plate number was provided
+        if ($invitation->plate_number) {
+            $vehicle = \App\Models\Vehicle::firstOrCreate(
+                ['license_plate' => strtoupper($invitation->plate_number)],
+                [
+                    'fleet_id' => $invitation->fleet_id,
+                    'name'     => 'Vehicle ' . strtoupper($invitation->plate_number),
+                    'status'   => 'idle'
+                ]
+            );
+
+            $vehicle->update(['current_driver_id' => $driver->id]);
+        }
 
         // Mark invitation as accepted
         $invitation->update(['accepted_at' => now()]);

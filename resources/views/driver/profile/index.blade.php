@@ -48,6 +48,14 @@
                     @enderror
                 </div>
 
+                <div>
+                    <label for="phone_number" class="block text-[10px] font-bold uppercase tracking-wider text-[#555] mb-2">Phone Number</label>
+                    <input id="phone_number" name="phone_number" type="text" class="block w-full bg-[#1a1a1a] border border-[#222] text-white rounded-lg px-4 py-3 outline-none focus:border-[#ff8a00] transition-colors" value="{{ old('phone_number', $user->driver?->phone_number) }}" autocomplete="tel" placeholder="+1 (555) 000-0000" />
+                    @error('phone_number')
+                        <p class="text-[10px] font-bold text-[#ef4444] uppercase tracking-widest mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="flex items-center gap-6 pt-4 border-t border-[#1a1a1a]">
                     <button type="submit" class="px-8 py-4 bg-white text-black rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/90 transition-all shadow-xl active:scale-95">
                         Update Details

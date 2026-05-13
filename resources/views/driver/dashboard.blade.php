@@ -266,19 +266,38 @@
         }
     }
 
-    // Global Shift Timer
+    // Global Shift Timer — accumulates across breaks, no lag on page load
     (function() {
-        @if($currentLog && $currentLog->status === 'on_duty')
-            const startTime = new Date("{{ $currentLog->started_at }}").getTime();
-            setInterval(() => {
-                const now = new Date().getTime();
-                const diff = now - startTime;
-                const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                const display = document.getElementById('shift-timer-display');
-                if (display) display.innerText = `${h}:${m}:${s}`;
-            }, 1000);
+        const display = document.getElementById('shift-timer-display');
+        if (!display) return;
+
+        @if($currentSegmentStart)
+            // Driver is currently ON DUTY
+            // previousSeconds = all completed on-duty seconds before this segment
+            const previousSeconds = {{ (int) max(0, $previousSeconds) }};
+            const segmentStart = new Date("{{ $currentSegmentStart }}").getTime();
+
+            function tick() {
+                const now = Date.now();
+                const liveSeconds = Math.floor((now - segmentStart) / 1000);
+                const total = previousSeconds + liveSeconds;
+
+                const h = Math.floor(total / 3600).toString().padStart(2, '0');
+                const m = Math.floor((total % 3600) / 60).toString().padStart(2, '0');
+                const s = (total % 60).toString().padStart(2, '0');
+                display.innerText = `${h}:${m}:${s}`;
+            }
+
+            tick(); // Show immediately on load, no delay
+            setInterval(tick, 1000);
+
+        @elseif($accumulatedSeconds > 0)
+            // Driver is on Break — show frozen accumulated time
+            const total = {{ (int) $accumulatedSeconds }};
+            const h = Math.floor(total / 3600).toString().padStart(2, '0');
+            const m = Math.floor((total % 3600) / 60).toString().padStart(2, '0');
+            const s = (total % 60).toString().padStart(2, '0');
+            display.innerText = `${h}:${m}:${s}`;
         @endif
     })();
 </script>
