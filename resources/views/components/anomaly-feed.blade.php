@@ -71,7 +71,14 @@
             isScanning: true,
             
             init() {
-                setInterval(() => this.pollAlerts(), 5000);
+                // Initialize lastAlertId from existing data to prevent 'new alert' triggers on load
+                if (this.alerts.length > 0) {
+                    this.lastAlertId = Math.max(...this.alerts.map(a => a.id));
+                }
+                // Wait 5 seconds before starting to poll for NEW alerts
+                setTimeout(() => {
+                    setInterval(() => this.pollAlerts(), 5000);
+                }, 5000);
             },
 
             async pollAlerts() {
