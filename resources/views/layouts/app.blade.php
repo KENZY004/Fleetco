@@ -12,61 +12,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Scripts & Styles -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // GLOBAL FLEET ENGINE
-        window.fleetDashboard = function(data) {
-            return {
-                systemStatus: 'Ready',
-                vehicles: [],
-                recentAlerts: data.alerts || [],
-                geofences: data.geofences || [],
-                map: null,
-                init() {
-                    console.log('Engine Starting...');
-                    setTimeout(() => {
-                        this.initMap();
-                        this.startPolling();
-                    }, 500);
-                },
-                initMap() {
-                    if (this.map) return;
-                    this.map = L.map('map', { zoomControl: false, attributionControl: false }).setView([19.0760, 72.8777], 11);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap'
-                    }).addTo(this.map);
-                    this.systemStatus = 'Map Ready';
-                },
-                startPolling() {
-                    this.fetchData();
-                    setInterval(() => this.fetchData(), 10000);
-                },
-                fetchData() {
-                    // Fetch Vehicles
-                    fetch('/api/vehicles')
-                        .then(r => r.json())
-                        .then(d => { this.vehicles = d; this.systemStatus = 'Live'; });
-                    
-                    // Fetch Stats
-                    fetch('/api/stats')
-                        .then(r => r.json())
-                        .then(s => { this.stats = s; });
-                },
-                selectVehicle(v) {
-                    this.selectedVehicle = v;
-                    if (v.latest_telematics) {
-                        const c = [v.latest_telematics.location.coordinates[1], v.latest_telematics.location.coordinates[0]];
-                        this.map.flyTo(c, 16);
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff8a00',
+                    },
+                    fontFamily: {
+                        heading: ['Plus Jakarta Sans', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
+    
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
