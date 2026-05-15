@@ -12,6 +12,7 @@ class MaintenanceRecord extends Model
 
     protected $fillable = [
         'vehicle_id',
+        'driver_id',
         'service_type',
         'odometer_reading',
         'cost',
@@ -31,5 +32,10 @@ class MaintenanceRecord extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class);
     }
 }

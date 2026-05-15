@@ -13,52 +13,56 @@ class DashboardController extends Controller
         $driver = $user->driver;
         $riskScore = $driver ? $driver->risk_score : 100;
         
-        $currentLog = \App\Models\DutyLog::where('driver_id', $user->id)
+        $currentLog = $driver ? \App\Models\DutyLog::where('driver_id', $driver->id)
             ->whereNull('ended_at')
-            ->first();
+            ->first() : null;
             
         $vehicle = $driver ? $driver->vehicle : null;
         
         $speedLimit = \App\Models\Setting::get('global_speed_limit', 100);
             
+        $isOffDuty = !$currentLog || $currentLog->status === 'off_duty';
+            
         // Distance KM calculation
         $distanceKM = 0;
-        if ($currentLog) {
+        if ($currentLog && $driver && !$isOffDuty) {
             $distanceKM = \Illuminate\Support\Facades\DB::table('driver_telemetry')
-                ->where('driver_id', $user->id)
-                ->where('captured_at', '>=', today())
-                ->sum('speed_kmh') * (4 / 3600); // Rough approximation: sum of speeds * 4s ping interval
+                ->where('driver_id', $driver->id)
+                ->where('captured_at', '>=', $currentLog->started_at)
+                ->sum('speed_kmh') * (4 / 3600); 
             $distanceKM = round($distanceKM, 1);
         }
         
-        $incidents = 0; // Set to 0 for now
+        $incidents = 0; 
 
-        $activeRoute = \App\Models\FleetRoute::where('driver_id', $user->id)
+        $activeRoute = $driver ? \App\Models\FleetRoute::where('driver_id', $driver->id)
             ->where('status', 'active')
-            ->first();
+            ->first() : null;
 
-        // Calculate total accumulated ON DUTY seconds for today (across all segments, including breaks)
-        $todayLogs = \App\Models\DutyLog::where('driver_id', $user->id)
-            ->where('status', 'on_duty')
-            ->whereDate('started_at', today())
-            ->get();
-
+        // Calculate accumulated time
         $accumulatedSeconds = 0;
-        foreach ($todayLogs as $log) {
-            $end = $log->ended_at ?? now();
-            $accumulatedSeconds += $log->started_at->diffInSeconds($end);
-        }
+        $previousSeconds = 0;
+        $currentSegmentStart = null;
 
-        // If currently on duty, the current segment's start time is needed for the live ticker offset
-        $currentSegmentStart = ($currentLog && $currentLog->status === 'on_duty')
-            ? $currentLog->started_at->toIso8601String()
-            : null;
+        if (!$isOffDuty && $driver) {
+            $todayLogs = \App\Models\DutyLog::where('driver_id', $driver->id)
+                ->where('status', 'on_duty')
+                ->whereDate('started_at', today())
+                ->get();
 
-        // Total seconds before current segment (so JS can add live seconds on top)
-        $previousSeconds = $accumulatedSeconds;
-        if ($currentSegmentStart) {
-            // Subtract current segment from accumulated (JS will add it back live)
-            $previousSeconds -= $currentLog->started_at->diffInSeconds(now());
+            foreach ($todayLogs as $log) {
+                $end = $log->ended_at ?? now();
+                $accumulatedSeconds += $log->started_at->diffInSeconds($end);
+            }
+
+            $currentSegmentStart = ($currentLog->status === 'on_duty')
+                ? $currentLog->started_at->toIso8601String()
+                : null;
+
+            $previousSeconds = $accumulatedSeconds;
+            if ($currentSegmentStart) {
+                $previousSeconds -= $currentLog->started_at->diffInSeconds(now());
+            }
         }
 
         return view('driver.dashboard', compact(

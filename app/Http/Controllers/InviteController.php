@@ -27,7 +27,7 @@ class InviteController extends Controller
     {
         $request->validate([
             'email'          => ['required', 'string', 'email', 'max:255'],
-            'name'           => ['required', 'string', 'max:255'],
+            'name'           => ['nullable', 'string', 'max:255'],
             'license_number' => ['nullable', 'string', 'max:255'],
             'plate_number'   => ['nullable', 'string', 'max:255'],
         ]);
@@ -37,6 +37,15 @@ class InviteController extends Controller
         // Generate a secure 64-char hex token
         $token = bin2hex(random_bytes(32)); // 32 bytes = 64 hex chars
 
+        // If name is missing (Resend case), pull it from the existing invitation
+        $name = $request->name;
+        if (!$name) {
+            $existing = DriverInvitation::where('email', $request->email)
+                ->where('fleet_id', $manager->fleet_id)
+                ->first();
+            $name = $existing ? $existing->name : 'Driver';
+        }
+
         // Create invitation (or update if pending for same email+fleet)
         $invitation = DriverInvitation::updateOrCreate(
             [
@@ -45,7 +54,7 @@ class InviteController extends Controller
             ],
             [
                 'invited_by'     => $manager->id,
-                'name'           => $request->name,
+                'name'           => $name,
                 'license_number' => $request->license_number,
                 'plate_number'   => $request->plate_number,
                 'token'          => $token,
@@ -124,20 +133,6 @@ class InviteController extends Controller
             'risk_score'     => 100,
         ]);
 
-        // Auto-assign vehicle if plate number was provided
-        if ($invitation->plate_number) {
-            $vehicle = \App\Models\Vehicle::firstOrCreate(
-                ['license_plate' => strtoupper($invitation->plate_number)],
-                [
-                    'fleet_id' => $invitation->fleet_id,
-                    'name'     => 'Vehicle ' . strtoupper($invitation->plate_number),
-                    'status'   => 'idle'
-                ]
-            );
-
-            $vehicle->update(['current_driver_id' => $driver->id]);
-        }
-
         // Mark invitation as accepted
         $invitation->update(['accepted_at' => now()]);
 
@@ -145,5 +140,24 @@ class InviteController extends Controller
         Auth::login($user);
 
         return redirect()->route('driver.dashboard');
+    }
+
+    /**
+     * DELETE /fleet/invite/{id}
+     * Revoke/Delete a pending invitation.
+     */
+    public function revoke(int $id): RedirectResponse
+    {
+        $invitation = DriverInvitation::findOrFail($id);
+
+        // Security check: Only the manager of that fleet can revoke
+        if ($invitation->fleet_id !== Auth::user()->fleet_id) {
+            abort(403);
+        }
+
+        $email = $invitation->email;
+        $invitation->delete();
+
+        return back()->with('success', "✓ Invitation for {$email} has been revoked and the link is now invalid.");
     }
 }

@@ -11,8 +11,19 @@ class RiskController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $driverId = $user->driver?->id;
+
+        if (!$driverId) {
+            return view('driver.risk.index', [
+                'incidents' => collect(),
+                'totalIncidents' => 0,
+                'speedingEvents' => 0,
+                'geofenceBreaches' => 0,
+                'unresolvedCount' => 0
+            ]);
+        }
         
-        $query = RiskEvent::where('driver_id', $user->id);
+        $query = RiskEvent::where('driver_id', $driverId);
         
         // Filtering
         if ($request->has('type') && $request->type !== 'all') {
@@ -30,10 +41,10 @@ class RiskController extends Controller
         $incidents = $query->orderBy('occurred_at', 'desc')->paginate(15);
         
         // Stats
-        $totalIncidents = RiskEvent::where('driver_id', $user->id)->count();
-        $speedingEvents = RiskEvent::where('driver_id', $user->id)->where('type', 'speeding')->count();
-        $geofenceBreaches = RiskEvent::where('driver_id', $user->id)->where('type', 'geofence_breach')->count();
-        $unresolvedCount = RiskEvent::where('driver_id', $user->id)->whereNull('resolved_at')->count();
+        $totalIncidents = RiskEvent::where('driver_id', $driverId)->count();
+        $speedingEvents = RiskEvent::where('driver_id', $driverId)->where('type', 'speeding')->count();
+        $geofenceBreaches = RiskEvent::where('driver_id', $driverId)->where('type', 'geofence_breach')->count();
+        $unresolvedCount = RiskEvent::where('driver_id', $driverId)->whereNull('resolved_at')->count();
 
         return view('driver.risk.index', compact('incidents', 'totalIncidents', 'speedingEvents', 'geofenceBreaches', 'unresolvedCount'));
     }

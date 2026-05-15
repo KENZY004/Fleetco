@@ -38,12 +38,10 @@ class AnalyticsService
      */
     public function getActiveVehiclesCount(): int
     {
-        $timeout = Carbon::now()->subSeconds(30);
-        
-        return Vehicle::where('status', '!=', 'offline')
-            ->whereHas('telematicsLogs', function ($query) use ($timeout) {
-                $query->where('captured_at', '>=', $timeout);
-            })->count();
+        // A vehicle is active if it has a driver who is currently ON DUTY
+        return Vehicle::whereHas('driver.dutyLogs', function ($query) {
+            $query->whereNull('ended_at')->where('status', 'on_duty');
+        })->count();
     }
 
     /**

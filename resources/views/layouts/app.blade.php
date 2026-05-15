@@ -39,6 +39,22 @@
     <style>
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
         [x-cloak] { display: none !important; }
+        
+        :root {
+            color-scheme: dark;
+        }
+
+        /* Make Date/Time Picker Icons Visible across all browsers */
+        input[type="date"],
+        input[type="datetime-local"] {
+            color-scheme: dark !important;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(100%) brightness(200%) contrast(100%) !important;
+            cursor: pointer !important;
+        }
     </style>
 </head>
 <body class="antialiased h-screen flex bg-[#020202] text-white overflow-hidden">
@@ -57,7 +73,7 @@
             <x-nav-link-sidebar icon="dashboard" route="dashboard" label="HQ" />
             <x-nav-link-sidebar icon="driver" route="drivers.index" label="Ops" />
             <x-nav-link-sidebar icon="vehicle" route="vehicles.index" label="Fleet" />
-            {{-- TODO: Teammate to add Routes nav item here: <x-nav-link-sidebar icon="route" route="fleet.routes.index" label="Routes" /> --}}
+            <x-nav-link-sidebar icon="route" route="fleet.routes.index" label="Routes" />
             <x-nav-link-sidebar icon="trips" route="trips.index" label="Trips" />
             <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
             <x-nav-link-sidebar icon="geofence" route="geofences.index" label="Zones" />
@@ -92,6 +108,7 @@
         <x-nav-link-sidebar icon="dashboard" route="dashboard" label="HQ" />
         <x-nav-link-sidebar icon="driver" route="drivers.index" label="Ops" />
         <x-nav-link-sidebar icon="vehicle" route="vehicles.index" label="Fleet" />
+        <x-nav-link-sidebar icon="route" route="fleet.routes.index" label="Routes" />
         <x-nav-link-sidebar icon="trips" route="trips.index" label="Trips" />
         <x-nav-link-sidebar icon="alert" route="alerts.index" label="Risk" />
 

@@ -24,9 +24,9 @@ class VehicleController extends Controller
     public function index(): View
     {
         $vehicles = $this->vehicleRepo->getAllWithStatus();
-        $unassignedDrivers = $this->driverRepo->getUnassigned();
+        $allDrivers = $this->driverRepo->all();
 
-        return view('vehicles.index', compact('vehicles', 'unassignedDrivers'));
+        return view('vehicles.index', compact('vehicles', 'allDrivers'));
     }
 
     public function store(StoreVehicleRequest $request): RedirectResponse

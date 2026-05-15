@@ -28,3 +28,6 @@ fleetco_security_spec.md
 Thumbs.db
 ngrok.exe
 .phpunit.result.cache
+database/database.sqlite
+/public/build
+build_log.txt

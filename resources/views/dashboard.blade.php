@@ -60,19 +60,19 @@
     <div id="map" class="absolute inset-0 z-0"></div>
     <!-- 2. TOP HUD: Real-time Stats -->
     <div class="absolute top-4 md:top-6 left-4 md:left-6 right-4 md:right-6 z-[1000] pointer-events-none">
-        <div class="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-6">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6">
             <!-- Left Side: Map Info -->
-            <div class="glass-obsidian p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/10 pointer-events-auto shadow-2xl">
+            <div class="glass-obsidian p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/10 pointer-events-auto shadow-2xl w-full md:w-auto">
                 <div class="text-[8px] md:text-[10px] text-orange-500 uppercase font-bold tracking-wider mb-1 md:mb-2">Ops Intelligence</div>
-                <div class="font-heading text-sm md:text-xl font-bold text-white tracking-tight mb-1" x-text="viewportCoords"></div>
+                <div class="font-heading text-xs md:text-xl font-bold text-white tracking-tight mb-1" x-text="viewportCoords"></div>
                 <div class="flex items-center gap-2">
                     <div class="h-1 w-1 md:h-1.5 md:w-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span class="text-[8px] md:text-[9px] font-bold text-zinc-500 uppercase tracking-widest" x-text="'System: ' + systemStatus"></span>
+                    <span class="text-[7px] md:text-[9px] font-bold text-zinc-500 uppercase tracking-widest" x-text="'System: ' + systemStatus"></span>
                 </div>
             </div>
 
             <!-- Center/Right: Live Stats Matrix -->
-            <div class="flex-1 pointer-events-auto">
+            <div class="w-full md:flex-1 pointer-events-auto">
                 <x-stats-overview :stats="$stats ?? []" />
             </div>
         </div>
@@ -221,7 +221,6 @@
         </div>
     </div>
 
-    {{-- FORENSIC INCIDENT MODAL --}}
     <div 
         x-show="inspectingAlert" 
         x-cloak
@@ -229,61 +228,61 @@
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
-        class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+        class="fixed inset-0 z-[10000] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md"
         @click.self="inspectingAlert = null"
         @keydown.escape.window="inspectingAlert = null"
     >
-        <div class="glass-obsidian rounded-[3rem] w-full max-w-4xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex h-[700px]">
+        <div class="glass-obsidian rounded-[2rem] md:rounded-[3rem] w-full max-w-4xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col md:flex-row h-[90vh] md:h-[700px]">
             {{-- Left Side: Forensic Map --}}
-            <div class="w-1/2 relative bg-zinc-900 border-r border-white/5">
-                <div id="forensic-map" class="absolute inset-0" style="height: 700px; background: #09090b;"></div>
-                <div class="absolute top-8 left-8 z-[1001] px-4 py-2 bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-2xl">
+            <div class="h-1/3 md:h-auto md:w-1/2 relative bg-zinc-900 border-b md:border-b-0 md:border-r border-white/5">
+                <div id="forensic-map" class="absolute inset-0" style="background: #09090b;"></div>
+                <div class="absolute top-4 md:top-8 left-4 md:left-8 z-[1001] px-3 md:px-4 py-1.5 md:py-2 bg-red-500 text-white text-[8px] md:text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-2xl">
                     Breach Location
                 </div>
             </div>
 
             {{-- Right Side: Data Deep-Dive --}}
-            <div class="w-1/2 p-12 flex flex-col gap-8 bg-obsidian-950/50">
+            <div class="flex-1 md:w-1/2 p-6 md:p-12 flex flex-col gap-6 md:gap-8 bg-obsidian-950/50 overflow-y-auto custom-scrollbar">
                 <div class="flex justify-between items-start">
                     <div>
-                        <div class="text-[10px] text-red-500 font-bold uppercase tracking-[0.2em] mb-2">Forensic Analysis</div>
-                        <h2 class="text-3xl font-bold text-white tracking-tight" x-text="formatType(inspectingAlert?.type, inspectingAlert?.details)"></h2>
+                        <div class="text-[8px] md:text-[10px] text-red-500 font-bold uppercase tracking-[0.2em] mb-1 md:mb-2">Forensic Analysis</div>
+                        <h2 class="text-xl md:text-3xl font-bold text-white tracking-tight" x-text="formatType(inspectingAlert?.type, inspectingAlert?.details)"></h2>
                     </div>
-                    <button @click="inspectingAlert = null" class="p-3 text-zinc-500 hover:text-white transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <button @click="inspectingAlert = null" class="p-2 md:p-3 text-zinc-500 hover:text-white transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5">
-                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-2">Driver Impact</div>
-                        <div class="text-2xl font-bold text-red-500" x-text="'-' + inspectingAlert?.impact_score + ' PTS'"></div>
+                <div class="grid grid-cols-2 gap-4 md:gap-6">
+                    <div class="p-4 md:p-5 rounded-2xl bg-white/5 border border-white/5">
+                        <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1 md:mb-2">Driver Impact</div>
+                        <div class="text-lg md:text-2xl font-bold text-red-500" x-text="'-' + inspectingAlert?.impact_score + ' PTS'"></div>
                     </div>
-                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5">
-                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-2">Occurred At</div>
-                        <div class="text-sm font-mono text-white" x-text="inspectingAlert ? new Date(inspectingAlert.occurred_at).toLocaleTimeString() : ''"></div>
+                    <div class="p-4 md:p-5 rounded-2xl bg-white/5 border border-white/5">
+                        <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1 md:mb-2">Occurred At</div>
+                        <div class="text-[10px] md:text-sm font-mono text-white" x-text="inspectingAlert ? new Date(inspectingAlert.occurred_at).toLocaleTimeString() : ''"></div>
                     </div>
                 </div>
 
-                <div class="flex-1 space-y-6">
-                    <div class="flex items-center gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/5">
-                        <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <div class="space-y-4 md:space-y-6">
+                    <div class="flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         </div>
                         <div>
-                            <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Involved Operator</div>
-                            <div class="text-white font-bold" x-text="inspectingAlert?.driver?.name"></div>
+                            <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Involved Operator</div>
+                            <div class="text-sm md:text-white font-bold" x-text="inspectingAlert?.driver?.name"></div>
                         </div>
                     </div>
 
-                    <div class="p-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.01]">
-                        <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-3">Telemetry Snapshot</div>
+                    <div class="p-5 md:p-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.01]">
+                        <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-2 md:mb-3">Telemetry Snapshot</div>
                         <div class="space-y-2">
-                            <div class="flex justify-between text-xs">
+                            <div class="flex justify-between text-[10px] md:text-xs">
                                 <span class="text-zinc-500 font-medium">Recorded Speed</span>
                                 <span class="text-white font-bold" x-text="(inspectingAlert?.details?.speed || '0') + ' KM/H'"></span>
                             </div>
-                            <div class="flex justify-between text-xs">
+                            <div class="flex justify-between text-[10px] md:text-xs">
                                 <span class="text-zinc-500 font-medium">Violation Type</span>
                                 <span class="text-white font-bold italic" x-text="inspectingAlert?.details?.breach_type || 'Point Breach'"></span>
                             </div>
@@ -291,24 +290,24 @@
                     </div>
                 </div>
 
-                <div class="p-6 rounded-2xl border border-white/5 bg-white/[0.01] space-y-4">
-                    <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Resolution Audit Note</div>
+                <div class="p-5 md:p-6 rounded-2xl border border-white/5 bg-white/[0.01] space-y-3 md:space-y-4">
+                    <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-widest">Resolution Audit Note</div>
                     <textarea 
                         x-model="resolutionNote" 
-                        placeholder="Why is this case being closed? (e.g. Authorized detour)" 
-                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-700 outline-none focus:border-primary/50 transition-all h-24 resize-none"
+                        placeholder="Why is this case being closed?" 
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-[10px] md:text-xs text-white placeholder-zinc-700 outline-none focus:border-primary/50 transition-all h-20 md:h-24 resize-none"
                     ></textarea>
                 </div>
 
-                <div class="mt-auto flex gap-4 pt-6">
+                <div class="mt-auto flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6">
                     <template x-if="inspectingAlert?.driver?.phone_number">
-                        <a :href="'tel:' + inspectingAlert.driver.phone_number" class="flex-1 py-5 bg-emerald-500 text-black text-center rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20">
+                        <a :href="'tel:' + inspectingAlert.driver.phone_number" class="flex-1 py-4 md:py-5 bg-emerald-500 text-black text-center rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20">
                             Initiate Contact
                         </a>
                     </template>
                     <button 
                         @click="dismissAlert(inspectingAlert.id, resolutionNote); inspectingAlert = null; resolutionNote = '';" 
-                        class="flex-1 py-5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-all hover:bg-white/5"
+                        class="flex-1 py-4 md:py-5 border border-white/10 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-all hover:bg-white/5"
                     >
                         Finalize & Resolve
                     </button>
@@ -376,7 +375,7 @@
             resolutionNote: '',
             vehicles: @json($vehicles),
             geofences: @json($geofences),
-            viewportCoords: '00.0000° N, 00.0000° E',
+            viewportCoords: '19.0760° N, 72.8777° E',
             haversineDistance: 0,
             systemStatus: 'Connecting...',
             lastPingTime: 'None',
@@ -442,7 +441,7 @@
 
                         window.Echo.channel('fleet-updates')
                             .listen('VehicleLocationUpdated', (e) => {
-                                console.log('Live Telemetry Received:', e);
+
                                 this.handleRealTimeUpdate(e);
                                 
                                 // Show a quick toast or pulse
@@ -451,13 +450,15 @@
 
                         window.Echo.channel('fleet-alerts')
                             .listen('AlertGenerated', (e) => {
-                                console.log('New Alert Received:', e);
-                                this.recentAlerts.unshift(e.alert);
+
                                 
-                                // Optional: Dispatch native notification
+                                // Add to top of list with reactivity
+                                this.recentAlerts = [e.alert, ...this.recentAlerts.slice(0, 4)];
+                                
+                                // Show a visual ping/notification
                                 if ("Notification" in window && Notification.permission === "granted") {
-                                    new Notification(`ALERT: ${this.formatType(e.alert.type, e.alert.details)}`, {
-                                        body: `Vehicle ${e.alert.vehicle?.license_plate || 'TEST-001'} - Impact: ${e.alert.impact_score}`
+                                    new Notification(`SECURITY BREACH: ${this.formatType(e.alert.type, e.alert.details)}`, {
+                                        body: `Vehicle ${e.alert.vehicle?.license_plate || 'TEST-001'} - Operator: ${e.alert.driver?.name}`
                                     });
                                 }
                             });
@@ -506,7 +507,7 @@
                     zoomControl: false,
                     attributionControl: false,
                     fadeAnimation: true,
-                }).setView([19.0760, 72.8777], 11);
+                }).setView([30.9010, 75.8573], 12); // Centered on Ludhiana, Punjab
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
@@ -521,7 +522,7 @@
                 this.map.on('click', () => {
                     this.selectedVehicle = null;
                     this.isFollowing = false;
-                    this.map.flyTo([19.0760, 72.8777], 11);
+                    this.map.flyTo([30.9010, 75.8573], 12);
                 });
 
                 this.updateMarkers();
@@ -698,7 +699,7 @@
             },
 
             calculateHaversine(coords) {
-                const center = [19.0760, 72.8777]; // Home Depot
+                const center = [30.9010, 75.8573]; // Home Depot (Ludhiana)
                 const R = 6371;
                 const dLat = (coords[0] - center[0]) * Math.PI / 180;
                 const dLon = (coords[1] - center[1]) * Math.PI / 180;
@@ -767,8 +768,8 @@
                     this.playbackPolyline = L.polyline(latlngs, {
                         color: '#ff8a00',
                         weight: 3,
-                        opacity: 0.5,
-                        dashArray: '10, 10'
+                        opacity: 0.8,
+                        lineJoin: 'round'
                     }).addTo(this.map);
 
                     this.map.fitBounds(this.playbackPolyline.getBounds(), { padding: [50, 50] });

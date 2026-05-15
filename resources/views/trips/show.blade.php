@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends(auth()->user()->role === 'driver' ? 'driver.layouts.app' : 'layouts.app')
 
 @section('content')
 <div class="flex flex-col gap-6 h-[calc(100vh-10rem)]" x-data="tripReplay()" x-init="init()">
@@ -6,7 +6,7 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div class="flex items-center gap-5">
-            <a href="{{ route('trips.index') }}" class="p-3 bg-white/5 border border-white/10 rounded-2xl text-zinc-500 hover:text-white transition-all shrink-0">
+            <a href="{{ auth()->user()->role === 'driver' ? route('driver.trips') : route('trips.index') }}" class="p-3 bg-white/5 border border-white/10 rounded-2xl text-zinc-500 hover:text-white transition-all shrink-0">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <div>

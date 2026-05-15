@@ -18,8 +18,7 @@ class FleetSeeder extends Seeder
         $fleet = Fleet::updateOrCreate(
             ['name' => 'Fleetco HQ'],
             [
-                'name'        => 'Fleetco HQ',
-                'description' => 'Default operational fleet',
+                'name' => 'Fleetco HQ',
             ]
         );
 

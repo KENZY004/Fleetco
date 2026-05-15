@@ -185,11 +185,16 @@
                 <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Assign Driver</label>
                 <select name="current_driver_id" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
                     <option value="">— No driver —</option>
-                    @foreach($unassignedDrivers as $driver)
-                        <option :value="{{ $driver->id }}" :selected="editDriverId == {{ $driver->id }}">{{ $driver->name }}</option>
+                    @foreach($allDrivers as $driver)
+                        <option value="{{ $driver->id }}" :selected="editDriverId == {{ $driver->id }}">
+                            {{ $driver->name }} 
+                            @if($driver->vehicle)
+                                — Currently with {{ $driver->vehicle->license_plate }}
+                            @endif
+                        </option>
                     @endforeach
                 </select>
-                <p class="text-[10px] text-zinc-600 mt-2">Only unassigned drivers are shown.</p>
+                <p class="text-[10px] text-zinc-600 mt-2 italic">Note: Drivers already assigned to other vehicles will be moved if selected.</p>
             </div>
             <div class="flex gap-4 pt-2">
                 <button type="button" @click="showEditModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>

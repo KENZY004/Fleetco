@@ -55,6 +55,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Driver::class);
     }
 
+    public function dutyLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DutyLog::class, 'driver_id');
+    }
+
+    public function telemetry(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\DriverTelemetry::class, 'driver_id');
+    }
+
     public function fleet(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Fleet::class);

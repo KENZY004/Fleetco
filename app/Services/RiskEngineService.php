@@ -95,116 +95,105 @@ class RiskEngineService
     protected function detectGeofenceBreach(TelematicsLog $log, Driver $driver): bool
     {
         $landmarks = Landmark::all();
-        $lat = 0; $lng = 0;
-
         $location = $log->location;
-        if (!($location instanceof \Clickbar\Magellan\Data\Geometries\Point)) {
-            return false;
-        }
+        if (!($location instanceof \Clickbar\Magellan\Data\Geometries\Point)) return false;
+        
         $lat = $location->getLatitude();
         $lng = $location->getLongitude();
-
         if ($lat === 0 || $lng === 0) return false;
+        $point = [$lat, $lng];
 
-        $point = [$lat, $lng]; // [lat, lng]
-        $cleanDrive = true;
+        $isInDepot = false;
+        $isInAuthorizedRoute = false;
+        $restrictedBreach = null;
 
         foreach ($landmarks as $landmark) {
             $coords = [];
             $area = $landmark->area;
             
-            if (is_array($area)) {
-                $coords = $area;
-            } elseif (is_string($area)) {
-                $coords = json_decode($area, true);
-            } elseif ($area instanceof \Clickbar\Magellan\Data\Geometries\Polygon) {
+            if (is_array($area)) $coords = $area;
+            elseif (is_string($area)) $coords = json_decode($area, true);
+            elseif ($area instanceof \Clickbar\Magellan\Data\Geometries\Polygon) {
                 $lineStrings = $area->getLineStrings();
                 if (!empty($lineStrings)) {
                     $ring = $lineStrings[0];
                     $coords = array_map(fn($p) => [$p->getLatitude(), $p->getLongitude()], $ring->getPoints());
                 }
             } elseif ($area && isset($area->coordinates)) {
-                $coords = $area->coordinates[0];
-                $coords = array_map(fn($p) => [$p[1], $p[0]], $coords);
+                $coords = array_map(fn($p) => [$p[1], $p[0]], $area->coordinates[0]);
             }
 
             if (empty($coords)) continue;
 
             $isInside = $this->isPointInPolygon($point, $coords);
 
-            // Logic: 
-            // 1. Restricted -> Alert if INSIDE
-            // 2. Optimized Route -> Alert if OUTSIDE (Route Deviation)
-            
-            $breach = false;
-            $type = '';
-
-            // Depot / Home Base Logic: If inside a depot, they are "Safe"
-            $isInDepot = Landmark::where('type', 'depot')->get()->contains(fn($l) => $this->isPointInPolygon($point, is_string($l->area) ? json_decode($l->area, true) : $l->area));
-
-            if ($landmark->type === 'restricted' && $isInside) {
-                $breach = true;
-                $type = 'unauthorized_entry';
-            } elseif ($landmark->type === 'optimized_route' && !$isInside && !$isInDepot) {
-                // Only alert for route deviation if they are NOT in a safe depot
-                $breach = true;
-                $type = 'route_deviation';
-            }
-
-            if ($breach) {
-                \Illuminate\Support\Facades\Log::info("RiskEngine: BREACH DETECTED: {$type}");
-                $impact = 10.00;
-                
-                // Simplified duplicate check for SQLite compatibility
-                $exists = RiskEvent::where('driver_id', $driver->id)
-                    ->where('type', 'geofence_breach')
-                    ->where('occurred_at', '>', now()->subMinutes(2))
-                    ->latest()
-                    ->first();
-
-                // Only create if it's a different landmark or enough time has passed
-                $isDuplicate = $exists && ($exists->details['landmark_id'] ?? null) == $landmark->id;
-
-                if (!$isDuplicate) {
-                    $alert = RiskEvent::create([
-                        'driver_id' => $driver->id,
-                        'vehicle_id' => $log->vehicle_id,
-                        'telematics_log_id' => $log->id,
-                        'type' => 'geofence_breach',
-                        'impact_score' => $impact,
-                        'details' => [
-                            'landmark_name' => $landmark->name,
-                            'landmark_id' => $landmark->id,
-                            'breach_type' => $type,
-                        ],
-                        'occurred_at' => $log->captured_at,
-                    ]);
-
-                    // Broadcast real-time alert
-                    event(new \App\Events\AlertGenerated($alert));
-
-                    // DISPATCH REAL-TIME SECURITY ALERT EMAIL
-                    try {
-                        $adminEmail = config('mail.from.address'); // Sending to the support email for review
-                        $emailData = [
-                            'vehicleName' => $log->vehicle->name ?? 'Unknown Vehicle',
-                            'driverName' => $driver->name,
-                            'incidentType' => 'Geofence Breach (' . str_replace('_', ' ', $type) . ')',
-                            'deviation' => 'Zone: ' . $landmark->name,
-                        ];
-                        
-                        Mail::to($adminEmail)->send(new SecurityAlert($emailData));
-                        \Illuminate\Support\Facades\Log::info("RiskEngine: Security Alert Email dispatched to {$adminEmail}");
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::error("RiskEngine: Failed to send security alert: " . $e->getMessage());
-                    }
-
-                    $this->applyScorePenalty($driver, $impact);
-                }
-                return true;
-            }
+            if ($landmark->type === 'depot' && $isInside) $isInDepot = true;
+            if ($landmark->type === 'optimized_route' && $isInside) $isInAuthorizedRoute = true;
+            if ($landmark->type === 'restricted' && $isInside) $restrictedBreach = $landmark;
         }
+
+        // SCENARIO 1: Unauthorized Entry into Restricted Zone (High Priority)
+        if ($restrictedBreach) {
+            return $this->triggerBreach($log, $driver, $restrictedBreach, 'unauthorized_entry');
+        }
+
+        // SCENARIO 2: Outside Base/Route while On Duty (Medium-High Priority)
+        if (!$isInDepot && !$isInAuthorizedRoute) {
+            // We'll use the 'base' landmark as the reference if it exists, or just a general breach
+            $base = Landmark::where('type', 'depot')->first();
+            return $this->triggerBreach($log, $driver, $base, 'outside_base_unauthorized');
+        }
+
         return false;
+    }
+
+    protected function triggerBreach(TelematicsLog $log, Driver $driver, ?Landmark $landmark, string $type): bool
+    {
+        $impact = 10.00;
+        
+        // Cooldown check: Don't spam alerts for the same breach
+        $exists = RiskEvent::where('driver_id', $driver->id)
+            ->where('type', 'geofence_breach')
+            ->where('occurred_at', '>', now()->subMinutes(5))
+            ->latest()
+            ->first();
+
+        if ($exists && ($exists->details['breach_type'] ?? '') === $type) {
+            return false;
+        }
+
+        $alert = RiskEvent::create([
+            'driver_id' => $driver->id,
+            'vehicle_id' => $log->vehicle_id,
+            'telematics_log_id' => $log->id,
+            'type' => 'geofence_breach',
+            'impact_score' => $impact,
+            'details' => [
+                'landmark_name' => $landmark->name ?? 'Unknown Perimeter',
+                'landmark_id' => $landmark->id ?? null,
+                'breach_type' => $type,
+            ],
+            'occurred_at' => $log->captured_at,
+        ]);
+
+        event(new \App\Events\AlertGenerated($alert));
+
+        // Send Email Alert
+        try {
+            $adminEmail = config('mail.from.address');
+            $emailData = [
+                'vehicleName' => $log->vehicle->name ?? 'Unknown Vehicle',
+                'driverName' => $driver->name,
+                'incidentType' => 'Geofence Breach (' . str_replace('_', ' ', $type) . ')',
+                'deviation' => $landmark ? 'Zone: ' . $landmark->name : 'Outside Authorized Perimeter',
+            ];
+            Mail::to($adminEmail)->send(new SecurityAlert($emailData));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("RiskEngine: Email failed: " . $e->getMessage());
+        }
+
+        $this->applyScorePenalty($driver, $impact);
+        return true;
     }
 
     /**

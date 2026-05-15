@@ -58,4 +58,13 @@ class Driver extends Model
         return $this->belongsTo(Fleet::class);
     }
 
+    /**
+     * Get the duty logs for this driver.
+     * Note: driver_id in duty_logs table refers to the user_id.
+     */
+    public function dutyLogs(): HasMany
+    {
+        return $this->hasMany(DutyLog::class, 'driver_id', 'user_id');
+    }
+
 }

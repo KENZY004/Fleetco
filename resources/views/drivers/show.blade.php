@@ -161,7 +161,17 @@
         <div class="col-span-12 lg:col-span-4 space-y-6">
             <div class="flex items-center justify-between px-2">
                 <h3 class="text-lg font-bold text-white tracking-tight">Recent Incidents</h3>
-                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-red-500">Security Log</span>
+                <div class="flex items-center gap-4">
+                    @if($alerts->count() > 0)
+                        <form action="{{ route('drivers.resolve-alerts', $driver->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest hover:text-white transition-colors">
+                                Clear All
+                            </button>
+                        </form>
+                    @endif
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-red-500">Security Log</span>
+                </div>
             </div>
 
             <div class="space-y-4">

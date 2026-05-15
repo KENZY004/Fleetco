@@ -87,21 +87,21 @@
             <form @submit.prevent="submitForm">
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Issue Type</label>
-                    <select x-model="issueType" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-orange">
-                        <option value="Engine">Engine</option>
-                        <option value="Tyres">Tyres</option>
-                        <option value="Brakes">Brakes</option>
-                        <option value="Electrical">Electrical</option>
-                        <option value="Other">Other</option>
+                    <select x-model="issueType" class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#ff8a00] appearance-none cursor-pointer">
+                        <option value="Engine" class="bg-[#111] text-white">Engine</option>
+                        <option value="Tyres" class="bg-[#111] text-white">Tyres</option>
+                        <option value="Brakes" class="bg-[#111] text-white">Brakes</option>
+                        <option value="Electrical" class="bg-[#111] text-white">Electrical</option>
+                        <option value="Other" class="bg-[#111] text-white">Other</option>
                     </select>
                 </div>
                 
                 <div class="mb-6">
                     <label class="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Description</label>
-                    <textarea x-model="description" required rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-orange placeholder:text-white/20" placeholder="Describe the problem..."></textarea>
+                    <textarea x-model="description" required rows="3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#ff8a00] placeholder:text-white/20" placeholder="Describe the problem..."></textarea>
                 </div>
                 
-                <button type="submit" :disabled="submitting" class="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-colors bg-accent-orange text-black hover:bg-orange-500 disabled:opacity-50">
+                <button type="submit" :disabled="submitting" class="w-full py-4 rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all bg-[#ff8a00] text-black hover:bg-[#ff9a22] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/20 disabled:opacity-50">
                     <span x-show="!submitting">Submit Report</span>
                     <span x-show="submitting">Submitting...</span>
                 </button>

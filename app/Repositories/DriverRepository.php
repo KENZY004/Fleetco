@@ -10,8 +10,7 @@ class DriverRepository
     public function all(): Collection
     {
         $fleetId = auth()->user()?->fleet_id;
-        return Driver::with(['user', 'riskEvents', 'vehicle'])
-            ->withCount(['telematicsLogs', 'riskEvents'])
+        return Driver::with(['user', 'vehicle'])
             ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
             ->get();
     }

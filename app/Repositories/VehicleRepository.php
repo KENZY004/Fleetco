@@ -12,17 +12,28 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        $user = auth()->user();
-        $fleetId = $user?->fleet_id;
+        $query = Vehicle::with(['driver', 'latestTelematics', 'activeRoute']);
         
-        $vehicles = Vehicle::with(['driver', 'latestTelematics', 'activeRoute'])
-            ->when($fleetId, fn($q) => $q->where('fleet_id', $fleetId))
-            ->get();
+        if (auth()->check() && auth()->user()->fleet_id) {
+            $query->where('fleet_id', auth()->user()->fleet_id);
+        }
+
+        $vehicles = $query->get();
         $timeout = \Carbon\Carbon::now()->subSeconds(45);
 
-        // Map through vehicles and force status to offline if they are stale
+        // Map through vehicles and force status based on Duty + Telemetry
         $vehicles->each(function ($vehicle) use ($timeout) {
-            if ($vehicle->status !== 'offline' && (!$vehicle->latestTelematics || $vehicle->latestTelematics->captured_at->lt($timeout))) {
+            // Check if assigned driver is currently ON DUTY
+            $isOnDuty = $vehicle->driver && $vehicle->driver->dutyLogs()
+                ->whereNull('ended_at')
+                ->where('status', 'on_duty')
+                ->exists();
+
+            if ($isOnDuty) {
+                // If on duty, they are ALWAYS active
+                $vehicle->status = 'active';
+            } elseif ($vehicle->status !== 'offline' && (!$vehicle->latestTelematics || $vehicle->latestTelematics->captured_at->lt($timeout))) {
+                // Otherwise, fall back to telemetry timeout
                 $vehicle->status = 'offline';
             }
         });

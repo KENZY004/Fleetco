@@ -55,15 +55,25 @@ class TripController extends Controller
             ->when($trip->end_time, fn($q) => $q->where('occurred_at', '<=', $trip->end_time))
             ->with('telematicsLog')
             ->get()
-            ->map(fn($alert) => [
-                'type'         => $alert->type,
-                'details'      => $alert->details ?? [],
-                'occurred_at'  => $alert->occurred_at->toIso8601String(),
-                'time'         => $alert->occurred_at->format('H:i:s'),
-                'lat'          => $alert->telematicsLog?->location?->getLatitude(),
-                'lng'          => $alert->telematicsLog?->location?->getLongitude(),
-            ])
-            ->filter(fn($a) => $a['lat'] && $a['lng'])
+            ->map(function($alert) {
+                // Determine lat/lng from log or fallback to details
+                $lat = $alert->telematicsLog?->location?->getLatitude();
+                $lng = $alert->telematicsLog?->location?->getLongitude();
+                
+                // Fallback for SQLite or missing log links
+                if (!$lat && isset($alert->details['lat'])) $lat = $alert->details['lat'];
+                if (!$lng && isset($alert->details['lng'])) $lng = $alert->details['lng'];
+
+                return [
+                    'id'           => $alert->id,
+                    'type'         => $alert->type,
+                    'details'      => $alert->details ?? [],
+                    'occurred_at'  => $alert->occurred_at->toIso8601String(),
+                    'time'         => $alert->occurred_at->format('H:i:s'),
+                    'lat'          => $lat,
+                    'lng'          => $lng,
+                ];
+            })
             ->values();
 
         return view('trips.show', compact('trip', 'logs', 'alerts'));

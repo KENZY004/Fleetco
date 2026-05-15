@@ -112,4 +112,11 @@ class DriverController extends Controller
         $this->driverRepo->update($driver, ['risk_score' => 100.00]);
         return redirect()->route('drivers.index')->with('success', 'Risk score reset to 100.');
     }
+
+    public function resolveAlerts(Driver $driver): RedirectResponse
+    {
+        \App\Models\RiskEvent::where('driver_id', $driver->id)->delete();
+
+        return back()->with('success', 'Incident log for ' . $driver->name . ' has been cleared.');
+    }
 }

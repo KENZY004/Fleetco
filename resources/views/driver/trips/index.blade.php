@@ -59,10 +59,12 @@
                                 $statusColor = $status === 'Completed' ? 'bg-[#10b981]/10 text-[#10b981]' : 'bg-[#ff8a00]/10 text-[#ff8a00]';
                                 
                                 $duration = '—';
-                                if ($trip->start_time && $trip->end_time) {
-                                    $duration = $trip->start_time->diffInHours($trip->end_time) . 'h ' . ($trip->start_time->diffInMinutes($trip->end_time) % 60) . 'm';
-                                } elseif ($trip->start_time) {
-                                    $duration = $trip->start_time->diffInHours(now()) . 'h ' . ($trip->start_time->diffInMinutes(now()) % 60) . 'm';
+                                if ($trip->start_time && ($trip->end_time || now())) {
+                                    $end = $trip->end_time ?? now();
+                                    $mins = $trip->start_time->diffInMinutes($end);
+                                    $h = intdiv($mins, 60);
+                                    $m = $mins % 60;
+                                    $duration = ($h > 0 ? $h . 'h ' : '') . $m . 'm';
                                 }
                             @endphp
                             <tr class="hover:bg-white/[0.02] transition-colors {{ $loop->even ? 'bg-[#0d0d0d]' : 'bg-[#111111]' }}">
@@ -79,9 +81,9 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <span class="text-[#555] hover:text-white transition-colors cursor-pointer">
+                                    <a href="{{ route('trips.show', $trip->id) }}" class="text-[#555] hover:text-white transition-colors cursor-pointer">
                                         <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                    </span>
+                                    </a>
                                 </td>
                             </tr>
                         @endforeach

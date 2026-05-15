@@ -42,13 +42,23 @@
             </button>
 
             @if (session('status') === 'password-updated')
-                <p
+                <div
                     x-data="{ show: true }"
                     x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest animate-pulse"
-                >{{ __('Password Updated') }}</p>
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-x-4"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="opacity-100 translate-x-0"
+                    x-transition:leave-end="opacity-0 translate-x-4"
+                    x-init="setTimeout(() => show = false, 3000)"
+                    class="flex items-center gap-3 px-5 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl"
+                >
+                    <div class="h-5 w-5 rounded-full bg-emerald-500 flex items-center justify-center text-black">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{{ __('Security Credentials Updated') }}</span>
+                </div>
             @endif
         </div>
     </form>

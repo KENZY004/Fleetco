@@ -59,10 +59,22 @@ class DashboardController extends Controller
         $alerts = RiskEvent::with(['vehicle', 'driver', 'telematicsLog'])
             ->whereNull('resolved_at')
             ->latest('occurred_at')
-            ->limit(10)
             ->get();
 
         return response()->json($alerts);
+    }
+
+    /**
+     * Resolve all active alerts.
+     */
+    public function resolveAll()
+    {
+        RiskEvent::whereNull('resolved_at')->update([
+            'resolved_at' => now(),
+            'resolution_note' => 'Resolved via bulk action.'
+        ]);
+
+        return response()->json(['success' => true]);
     }
 
     public function resolveAlert(Request $request, RiskEvent $alert)

@@ -160,7 +160,7 @@
             },
 
             addPoint(lat, lng) {
-                console.log('Adding Point:', lat, lng);
+
                 this.points.push([lat, lng]);
                 
                 // Add marker
