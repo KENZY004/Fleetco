@@ -50,7 +50,7 @@
 
                 <div>
                     <label for="phone_number" class="block text-[10px] font-bold uppercase tracking-wider text-[#555] mb-2">Phone Number</label>
-                    <input id="phone_number" name="phone_number" type="text" class="block w-full bg-[#1a1a1a] border border-[#222] text-white rounded-lg px-4 py-3 outline-none focus:border-[#ff8a00] transition-colors" value="{{ old('phone_number', $user->driver?->phone_number) }}" autocomplete="tel" placeholder="+1 (555) 000-0000" />
+                    <input id="phone_number" name="phone_number" type="text" class="block w-full bg-[#1a1a1a] border border-[#222] text-white rounded-lg px-4 py-3 outline-none focus:border-[#ff8a00] transition-colors" value="{{ old('phone_number', $user->driver?->phone_number) }}" autocomplete="tel" placeholder="+91 98765 43210" />
                     @error('phone_number')
                         <p class="text-[10px] font-bold text-[#ef4444] uppercase tracking-widest mt-2">{{ $message }}</p>
                     @enderror

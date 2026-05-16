@@ -14,9 +14,11 @@
                 Back to List
             </a>
             @if($route->status !== 'completed')
-            <button class="px-6 py-3 bg-primary text-black rounded-full text-[11px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95">
+            @if($route->status !== 'completed')
+            <a href="{{ route('fleet.routes.edit', $route->id) }}" class="px-6 py-3 bg-primary text-black rounded-full text-[11px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95">
                 Edit Route
-            </button>
+            </a>
+            @endif
             @endif
         </div>
     </div>

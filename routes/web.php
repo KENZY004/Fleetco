@@ -15,7 +15,23 @@ Route::get('/', function () {
     return view('landing');
 })->name('landing');
 
-
+// Temporary debug route for Render Free Tier - DELETE AFTER USE
+Route::get('/debug-db-fix', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'FleetSeeder']);
+        $users = \App\Models\User::all(['name', 'email', 'role']);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Database seeded and users retrieved',
+            'users' => $users
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
 
 Route::middleware(['auth'])->group(function () {
     // Shared Replay Access
@@ -40,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/vehicles/{vehicle}/regenerate-token', [VehicleController::class, 'regenerateToken'])->name('vehicles.regenerate-token');
         Route::get('/vehicles/{vehicle}/maintenance', [VehicleMaintenanceController::class, 'index'])->name('vehicles.maintenance');
         Route::post('/vehicles/{vehicle}/maintenance', [VehicleMaintenanceController::class, 'store'])->name('vehicles.maintenance.store');
+        Route::post('/maintenance/{record}/resolve', [VehicleMaintenanceController::class, 'resolve'])->name('vehicles.maintenance.resolve');
 
         // Geofence Management
         Route::get('/geofences', [GeofenceController::class, 'index'])->name('geofences.index');
@@ -53,6 +70,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Trip Analytics
         Route::get('/trips', [TripController::class, 'index'])->name('trips.index');
+        Route::delete('/trips/{trip}', [TripController::class, 'destroy'])->name('trips.destroy');
+        Route::delete('/trips-clear', [TripController::class, 'clearAll'])->name('trips.clear');
 
         // Global Settings
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -74,6 +93,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/duty/off', [App\Http\Controllers\Driver\DutyController::class, 'goOffDuty'])->name('duty.off');
         
         // Maintenance
+        Route::get('/maintenance', [App\Http\Controllers\Driver\MaintenanceController::class, 'index'])->name('maintenance.index');
         Route::post('/maintenance', [App\Http\Controllers\Driver\MaintenanceController::class, 'store'])->name('maintenance.store');
         
         // Telemetry
@@ -110,6 +130,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/', [App\Http\Controllers\Fleet\RouteController::class, 'store'])->name('store');
         Route::post('/{id}/assign', [App\Http\Controllers\Fleet\RouteController::class, 'assign'])->name('assign');
         Route::get('/{id}', [App\Http\Controllers\Fleet\RouteController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [App\Http\Controllers\Fleet\RouteController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [App\Http\Controllers\Fleet\RouteController::class, 'update'])->name('update');
         Route::delete('/{id}', [App\Http\Controllers\Fleet\RouteController::class, 'destroy'])->name('destroy');
     });
 

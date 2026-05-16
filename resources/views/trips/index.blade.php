@@ -10,6 +10,14 @@
             <h1 class="font-heading text-3xl font-bold tracking-tight">Trip History</h1>
             <p class="text-zinc-500 text-sm mt-1">Browse and replay all recorded vehicle journeys.</p>
         </div>
+        
+        <form action="{{ route('trips.clear') }}" method="POST" onsubmit="return confirm('CRITICAL ACTION: This will permanently erase ALL mission history from the fleet database. Are you absolutely sure?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5">
+                Clear All History
+            </button>
+        </form>
     </div>
 
     {{-- Filter --}}
@@ -52,7 +60,7 @@
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1-1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
                                     </div>
                                     <div>
                                         <div class="font-bold text-white">{{ $trip->vehicle?->name ?? '—' }}</div>
@@ -91,11 +99,21 @@
                                 @endif
                             </td>
                             <td class="px-8 py-6 text-right">
-                                <a href="{{ route('trips.show', $trip->id) }}"
-                                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:border-primary/30 hover:bg-primary/5 transition-all group-hover:border-white/20">
-                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                    Replay
-                                </a>
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('trips.show', $trip->id) }}"
+                                       class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:border-primary/30 hover:bg-primary/5 transition-all group-hover:border-white/20">
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        Replay
+                                    </a>
+                                    
+                                    <form action="{{ route('trips.destroy', $trip->id) }}" method="POST" onsubmit="return confirm('Erase this trip record? This cannot be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

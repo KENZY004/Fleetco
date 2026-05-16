@@ -8,6 +8,20 @@ use Illuminate\Http\Request;
 
 class MaintenanceController extends Controller
 {
+    public function index()
+    {
+        $user = auth()->user();
+        if (!$user->driver) {
+            return redirect()->route('driver.dashboard');
+        }
+
+        $records = MaintenanceRecord::where('driver_id', $user->driver->id)
+            ->latest()
+            ->get();
+
+        return view('driver.maintenance.index', compact('records'));
+    }
+
     public function store(Request $request)
     {
         // Security check

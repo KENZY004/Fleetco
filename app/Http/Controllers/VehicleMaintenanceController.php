@@ -12,15 +12,19 @@ class VehicleMaintenanceController extends Controller
 {
     public function index(Vehicle $vehicle): View
     {
-        $records = $vehicle->maintenanceRecords()->latest('service_date')->get();
+        $allRecords = $vehicle->maintenanceRecords()->latest('created_at')->get();
         
-        // Simple logic for service due
-        // For demonstration, let's say every 5000km
+        // Finalized Services: Records with cost > 0 OR status is 'resolved'
+        $records = $allRecords->filter(fn($r) => $r->cost > 0 || $r->status === 'resolved');
+        
+        // Pending Driver Reports: Records with cost = 0 AND status is 'reported'
+        $pendingIssues = $allRecords->filter(fn($r) => $r->cost == 0 && $r->status === 'reported');
+        
         $lastServiceOdo = $records->first()?->odometer_reading ?? 0;
         $kmSinceService = $vehicle->odometer - $lastServiceOdo;
         $serviceDue = $kmSinceService >= 5000;
 
-        return view('maintenance.index', compact('vehicle', 'records', 'kmSinceService', 'serviceDue'));
+        return view('maintenance.index', compact('vehicle', 'records', 'pendingIssues', 'kmSinceService', 'serviceDue'));
     }
 
     public function store(Request $request, Vehicle $vehicle): RedirectResponse
@@ -34,8 +38,29 @@ class VehicleMaintenanceController extends Controller
             'next_service_at_km' => 'nullable|numeric',
         ]);
 
+        $validated['status'] = 'resolved';
+
         $vehicle->maintenanceRecords()->create($validated);
 
         return redirect()->back()->with('success', 'Maintenance record added successfully.');
+    }
+
+    public function resolve(Request $request, MaintenanceRecord $record): RedirectResponse
+    {
+        $validated = $request->validate([
+            'cost' => 'required|numeric',
+            'notes' => 'nullable|string',
+            'odometer_reading' => 'required|numeric',
+        ]);
+
+        $record->update([
+            'cost' => $validated['cost'],
+            'notes' => $record->notes . " | RESOLVED: " . $validated['notes'],
+            'odometer_reading' => $validated['odometer_reading'],
+            'status' => 'resolved',
+            'service_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Driver report resolved and moved to history.');
     }
 }

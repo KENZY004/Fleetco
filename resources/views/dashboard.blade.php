@@ -1,53 +1,5 @@
 @extends('layouts.app')
 
-<script>
-    // DEFINE THE DASHBOARD BRAIN AT THE TOP SO IT LOADS BEFORE ALPINE STARTS
-    window.fleetDashboard = function() {
-        return {
-            map: null,
-            markers: {},
-            paths: {},
-            selectedVehicle: null,
-            inspectingAlert: null,
-            routePolylines: {},
-            forensicMap: null,
-            forensicMarker: null,
-            searchQuery: '',
-            statusFilter: 'all',
-            resolutionNote: '',
-            vehicles: @json($vehicles),
-            geofences: @json($geofences),
-            viewportCoords: '00.0000° N, 00.0000° E',
-            haversineDistance: 0,
-            systemStatus: 'Connecting...',
-            lastPingTime: 'None',
-            recentAlerts: @json($recentAlerts),
-            isFleetListOpen: false,
-            isMobile: window.innerWidth < 768,
-
-            init() {
-                const setup = () => {
-                    console.log('Dashboard Initializing...');
-                    this.$nextTick(() => {
-                        try {
-                            this.initMap();
-                            this.systemStatus = 'Map Ready';
-                        } catch (e) {
-                            console.error('Map Engine Failed:', e);
-                            this.systemStatus = 'Map Error';
-                        }
-                        this.startPolling();
-                    });
-                };
-
-                // Safety: Setup immediately if page is already loaded, otherwise wait
-                if (document.readyState === 'complete') {
-                    setup();
-                } else {
-                    window.addEventListener('load', setup);
-                }
-            },
-
 @section('main-class', '')
 
 @section('content')
@@ -60,9 +12,9 @@
     <div id="map" class="absolute inset-0 z-0"></div>
     <!-- 2. TOP HUD: Real-time Stats -->
     <div class="absolute top-4 md:top-6 left-4 md:left-6 right-4 md:right-6 z-[1000] pointer-events-none">
-        <div class="flex flex-col md:flex-row justify-between items-start gap-4 md:gap-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-4 md:gap-6">
             <!-- Left Side: Map Info -->
-            <div class="glass-obsidian p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/10 pointer-events-auto shadow-2xl w-full md:w-auto">
+            <div class="glass-obsidian p-3 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/10 pointer-events-auto shadow-2xl w-full lg:w-auto">
                 <div class="text-[8px] md:text-[10px] text-orange-500 uppercase font-bold tracking-wider mb-1 md:mb-2">Ops Intelligence</div>
                 <div class="font-heading text-xs md:text-xl font-bold text-white tracking-tight mb-1" x-text="viewportCoords"></div>
                 <div class="flex items-center gap-2">
@@ -72,14 +24,14 @@
             </div>
 
             <!-- Center/Right: Live Stats Matrix -->
-            <div class="w-full md:flex-1 pointer-events-auto">
+            <div class="w-full lg:flex-1 pointer-events-auto overflow-x-auto no-scrollbar">
                 <x-stats-overview :stats="$stats ?? []" />
             </div>
         </div>
     </div>
 
-    <!-- 3. LEFT HUD: Fleet Matrix (Desktop Only) -->
-    <div class="hidden md:flex absolute top-44 left-6 bottom-10 w-72 z-[1000] pointer-events-auto flex-col gap-4">
+    <!-- 3. LEFT HUD: Fleet Matrix (Desktop Only - Hidden on small screens) -->
+    <div class="hidden xl:flex absolute top-44 left-6 bottom-10 w-72 z-[1000] pointer-events-auto flex-col gap-4">
         <div class="glass-obsidian rounded-[2rem] border border-white/10 overflow-hidden flex flex-col flex-1 shadow-2xl">
             <div class="py-5 px-8 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Live Fleet</span>
@@ -118,7 +70,7 @@
         </div>
     </div>
 
-    <!-- MOBILE FLEET DRAWER (DEDICATED OVERLAY) -->
+    <!-- MOBILE FLEET DRAWER -->
     <div 
         x-show="isFleetListOpen"
         x-transition:enter="transition ease-out duration-300"
@@ -127,7 +79,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="translate-y-0"
         x-transition:leave-end="translate-y-full"
-        class="md:hidden fixed inset-0 z-[5000] bg-black/95 backdrop-blur-2xl p-4 flex flex-col"
+        class="xl:hidden fixed inset-0 z-[5000] bg-black/95 backdrop-blur-2xl p-4 flex flex-col"
         style="display: none;"
     >
         <div class="flex justify-between items-center mb-6 px-4 pt-4">
@@ -146,7 +98,7 @@
                     <div 
                         @click="selectVehicle(vehicle); isFleetListOpen = false;"
                         class="p-5 rounded-2xl border border-white/5 bg-white/[0.03] flex items-center gap-4 active:scale-[0.98] transition-all"
-                        :class="selectedVehicle?.id == vehicle.id ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_rgba(255,138,0,0.1)]' : ''"
+                        :class="selectedVehicle?.id == vehicle.id ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_rgba(255,138,0,0.15)]' : ''"
                     >
                         <div class="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center text-zinc-500" :class="selectedVehicle?.id == vehicle.id ? 'text-primary' : ''">
                              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
@@ -161,70 +113,195 @@
             </div>
         </div>
     </div>
-    
-    <!-- MOBILE FLEET TOGGLE (FAB) -->
-    <button 
-        @click="isFleetListOpen = true"
-        class="md:hidden fixed bottom-28 right-6 z-[2000] w-16 h-16 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_10px_30px_rgba(255,138,0,0.4)] active:scale-90 transition-transform"
-    >
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16m-7 6h7"/></svg>
-    </button>
 
-    <!-- 4. RIGHT HUD: Anomaly Feed -->
-    <div class="hidden md:flex absolute top-44 right-6 bottom-10 w-80 z-[1000] pointer-events-auto">
+    <!-- MOBILE ALERTS DRAWER -->
+    <div 
+        x-show="isAlertsOpen"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-y-full"
+        x-transition:enter-end="translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-y-0"
+        x-transition:leave-end="translate-y-full"
+        class="xl:hidden fixed inset-0 z-[5000] bg-black/95 backdrop-blur-2xl p-4 flex flex-col"
+        style="display: none;"
+    >
+        <div class="flex justify-between items-center mb-6 px-4 pt-4">
+            <div>
+                <div class="text-[8px] text-red-500 font-black uppercase tracking-[0.4em] mb-1">Breach Intelligence</div>
+                <h3 class="text-xl font-bold text-white tracking-tight">Security Alerts</h3>
+            </div>
+            <button @click="isAlertsOpen = false" class="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto custom-scrollbar px-2">
+            <x-anomaly-feed :anomalies="$recentAlerts" />
+        </div>
+    </div>
+    
+    <!-- MOBILE TOGGLES (FABS) -->
+    <div class="xl:hidden fixed bottom-28 right-6 z-[2000] flex flex-col gap-4">
+        {{-- Fleet FAB --}}
+        <button 
+            @click="isFleetListOpen = true; isAlertsOpen = false;"
+            class="w-16 h-16 rounded-full bg-primary text-black flex items-center justify-center shadow-[0_10px_30px_rgba(255,138,0,0.4)] active:scale-90 transition-transform"
+        >
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+        </button>
+
+        {{-- Alerts FAB --}}
+        <button 
+            @click="isAlertsOpen = true; isFleetListOpen = false;"
+            class="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_10px_30px_rgba(220,38,38,0.4)] active:scale-90 transition-transform relative"
+        >
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <template x-if="(recentAlerts || []).filter(a => !a.resolved_at).length > 0">
+                <div class="absolute -top-1 -right-1 h-5 w-5 bg-white text-red-600 text-[10px] font-black rounded-full flex items-center justify-center border-2 border-red-600" x-text="(recentAlerts || []).filter(a => !a.resolved_at).length"></div>
+            </template>
+        </button>
+    </div>
+
+    <!-- 4. RIGHT HUD: Anomaly Feed (Desktop) -->
+    <div class="hidden xl:flex absolute top-44 right-6 bottom-10 w-80 z-[1000] pointer-events-auto">
         <div class="glass-obsidian rounded-[2rem] border border-white/10 overflow-hidden flex flex-col h-full shadow-2xl">
             <x-anomaly-feed :anomalies="$recentAlerts" />
         </div>
     </div>
 
 
-    <!-- 5. BOTTOM HUD: Selection Profile -->
+    <!-- 5. BOTTOM HUD: Selection Profile (Improved Responsiveness) -->
+    <!-- 5. BOTTOM HUD: Selection Profile / Playback HUD (Improved Responsiveness) -->
     <div 
         x-show="selectedVehicle"
-        x-cloak
-        style="display: none;"
+        x-ref="selectionHud"
         x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-8"
-        class="absolute bottom-24 md:bottom-10 left-4 md:left-80 right-4 md:right-96 z-[1001] pointer-events-auto"
+        class="absolute bottom-24 md:bottom-10 left-4 xl:left-80 right-4 xl:right-96 z-[1001] pointer-events-auto"
+        @click.stop
+        @mousedown.stop
+        @dblclick.stop
     >
-        <div class="glass-obsidian p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-primary/20 shadow-[0_0_50px_rgba(255,138,0,0.15)] flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-4 md:gap-8 w-full md:w-auto">
-                <div class="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
-                    <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.3em] mb-1">Target_Unit</div>
-                    <h3 class="font-heading text-lg md:text-2xl font-bold text-white tracking-tight truncate" x-text="selectedVehicle?.license_plate"></h3>
-                </div>
-                <div class="hidden md:block h-10 w-[1px] bg-white/10 mx-4"></div>
-                <div class="flex gap-6 md:gap-8">
-                    <div>
-                        <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Status</div>
-                        <div class="flex items-center gap-2">
-                            <div class="h-2 w-2 rounded-full" :class="(selectedVehicle?.status === 'active' || selectedVehicle?.status === 'moving') ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-800'"></div>
-                            <span class="text-[9px] font-bold text-white uppercase tracking-widest" x-text="selectedVehicle?.status"></span>
+        {{-- Selection Profile View --}}
+        <template x-if="!isVisualising">
+            <div class="glass-obsidian p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-primary/20 shadow-[0_0_50px_rgba(255,138,0,0.15)] flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-4 md:gap-8 w-full md:w-auto">
+                    <div class="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
+                        <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.3em] mb-1">Target_Unit</div>
+                        <h3 class="font-heading text-lg md:text-2xl font-bold text-white tracking-tight truncate" x-text="selectedVehicle?.license_plate"></h3>
+                    </div>
+                    <div class="hidden lg:block h-10 w-[1px] bg-white/10 mx-4"></div>
+                    <div class="flex gap-6 md:gap-8">
+                        <div>
+                            <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Status</div>
+                            <div class="flex items-center gap-2">
+                                <div class="h-2 w-2 rounded-full" :class="(selectedVehicle?.status === 'active' || selectedVehicle?.status === 'moving') ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-800'"></div>
+                                <span class="text-[9px] font-bold text-white uppercase tracking-widest" x-text="selectedVehicle?.status"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Score</div>
+                            <div class="text-base md:text-xl font-bold text-white" x-text="selectedVehicle?.driver?.risk_score ? Math.round(selectedVehicle.driver.risk_score) : '—'"></div>
                         </div>
                     </div>
-                    <div>
-                        <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Score</div>
-                        <div class="text-base md:text-xl font-bold text-white" x-text="selectedVehicle?.driver?.risk_score ? Math.round(selectedVehicle.driver.risk_score) : '—'"></div>
-                    </div>
+                </div>
+
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button @click="visualiseMission()" 
+                            class="flex-1 md:flex-none px-6 md:px-8 py-3 md:py-4 bg-white text-black rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            :disabled="isPlaybackLoading">
+                        <template x-if="isPlaybackLoading">
+                            <svg class="animate-spin h-3 w-3 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </template>
+                        <span x-text="isPlaybackLoading ? 'Loading_History...' : 'Replay_Mission'"></span>
+                    </button>
+                    <button @click="selectedVehicle = null; isFollowing = false;" class="p-3 md:p-4 border border-white/10 rounded-xl md:rounded-2xl text-zinc-500 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
             </div>
+        </template>
 
-            <div class="flex gap-3 w-full md:w-auto">
-                <button @click="visualiseMission()" class="flex-1 md:flex-none px-6 md:px-8 py-3 md:py-4 bg-white text-black rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-xl active:scale-95">Replay_Mission</button>
-                <button @click="selectedVehicle = null; isFollowing = false;" class="p-3 md:p-4 border border-white/10 rounded-xl md:rounded-2xl text-zinc-500 hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+        {{-- Playback HUD View --}}
+        <template x-if="isVisualising">
+            <div class="glass-obsidian p-4 md:p-6 rounded-[2rem] md:rounded-[2.5rem] border border-primary/50 shadow-[0_0_50px_rgba(255,138,0,0.3)] flex flex-col gap-4">
+                <div class="flex items-center justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="h-10 w-10 rounded-xl bg-primary text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,138,0,0.4)]">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-[8px] text-primary font-black uppercase tracking-[0.3em]">Playback_Mode</div>
+                            <h3 class="text-base md:text-xl font-bold text-white tracking-tight" x-text="selectedVehicle?.license_plate"></h3>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 md:gap-8">
+                        <div class="text-right">
+                            <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-0.5">Historical Speed</div>
+                            <div class="text-sm md:text-lg font-mono font-bold text-white" x-text="Math.round(playbackPath[playbackIndex]?.speed || 0) + ' KM/H'"></div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[8px] text-zinc-500 uppercase font-bold tracking-widest mb-0.5">Recorded Time</div>
+                            <div class="text-sm md:text-lg font-mono font-bold text-white" x-text="playbackPath[playbackIndex]?.time || '--:--:--'"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Controls Row --}}
+                <div class="flex items-center gap-4 md:gap-6 bg-white/5 p-3 rounded-2xl border border-white/5">
+                    {{-- Play/Pause --}}
+                    <button @click="togglePlayback()" class="h-10 w-10 md:h-12 md:w-12 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-all shrink-0">
+                        <template x-if="!isPlaying">
+                            <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </template>
+                        <template x-if="isPlaying">
+                            <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </template>
+                    </button>
+
+                    {{-- Progress Bar --}}
+                    <div class="flex-1 flex flex-col gap-1.5">
+                        <div class="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer relative" @click="scrubPlayback($event)">
+                            <div class="absolute inset-0 bg-primary/20"></div>
+                            <div class="h-full bg-primary relative transition-all duration-300" :style="'width: ' + ((playbackIndex / playbackPath.length) * 100) + '%'">
+                                <div class="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 bg-white border-2 border-primary rounded-full shadow-[0_0_10px_#ff8a00]"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Speed Selector --}}
+                    <div class="flex items-center gap-2">
+                        <template x-for="s in [0.5, 1, 2, 4]" :key="s">
+                            <button 
+                                @click="playbackSpeedMultiplier = s"
+                                class="px-2 md:px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                                :class="playbackSpeedMultiplier === s ? 'bg-primary text-black' : 'bg-white/5 text-zinc-500 hover:text-white'"
+                                x-text="s + 'x'"
+                            ></button>
+                        </template>
+                    </div>
+
+                    <div class="h-8 w-[1px] bg-white/10 mx-2 hidden md:block"></div>
+
+                    {{-- Exit --}}
+                    <button @click="clearPlayback()" class="px-4 md:px-6 py-2 md:py-3 border border-red-500/30 text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all active:scale-95">
+                        Exit_Replay
+                    </button>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
 
     <div 
         x-show="inspectingAlert" 
-        x-cloak
-        style="display: none;"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
@@ -340,7 +417,10 @@
         background: #09090b !important;
     }
     .custom-vengo-icon {
-        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Snappy but smooth glide */
+        /* No transition by default to prevent fly-in from top-left on load */
+    }
+    .markers-ready .custom-vengo-icon {
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .vehicle-rotation {
         transition: transform 0.5s ease-in-out;
@@ -358,16 +438,26 @@
         text-transform: uppercase !important;
         letter-spacing: 0.1em !important;
     }
+
+    @keyframes fleetco-fade-in {
+        from { opacity: 0; transform: translateY(4px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-fleetco-fade-in {
+        animation: fleetco-fade-in 0.4s cubic-bezier(0, 0, 0.2, 1) forwards;
+    }
 </style>
 
-    window.OLD_fleetDashboard = function() {
+@push('scripts')
+<script>
+    function fleetDashboard() {
         return {
             map: null,
             markers: {},
             paths: {}, // Store live paths
             selectedVehicle: null,
             inspectingAlert: null,
-            routePolylines: {},
+            routePolylines: {}, // Store route polylines
             forensicMap: null,
             forensicMarker: null,
             searchQuery: '',
@@ -382,6 +472,34 @@
             recentAlerts: @json($recentAlerts),
             isFleetListOpen: false,
             isMobile: window.innerWidth < 768,
+
+            async fetchVehicles() {
+                if (this.isVisualising) return;
+                try {
+                    const response = await fetch('/api/vehicles');
+                    const data = await response.json();
+                    
+                    // Maintain selection reference if it exists
+                    const currentSelectedId = this.selectedVehicle?.id;
+
+                    this.vehicles = data.map(v => {
+                        // Ensure correct coordinate mapping for Leaflet [lat, lng]
+                        if (v.latest_telematics && v.latest_telematics.location) {
+                            // No change needed to data, just ensuring reactivity
+                        }
+                        return v;
+                    });
+
+                    // Re-sync selectedVehicle if it was updated
+                    if (currentSelectedId) {
+                        this.selectedVehicle = this.vehicles.find(v => v.id === currentSelectedId);
+                    }
+
+                    this.updateMarkers();
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            },
 
             get filteredVehicles() {
                 return this.vehicles.filter(vehicle => {
@@ -403,32 +521,34 @@
             
             // Playback State
             playbackPolyline: null,
+            playedPolyline: null, 
             playbackMarker: null,
+            playbackAlertMarkers: [],
             isVisualising: false,
+            isPlaybackLoading: false, // New: Loading state
+            isPlaying: false,
             playbackIndex: 0,
             playbackPath: [],
+            playbackSpeedMultiplier: 1,
+            playbackTimer: null,
             isFollowing: false,
+            isFleetListOpen: false,
+            isAlertsOpen: false,
 
             init() {
-                window.addEventListener('load', () => {
-                    console.log('Dashboard Initializing...');
-                    this.$nextTick(() => {
-                        try {
-                            this.initMap();
-                            this.systemStatus = 'Map Ready';
-                        } catch (e) {
-                            console.error('Map Engine Failed:', e);
-                            this.systemStatus = 'Map Error';
-                        }
-                        this.startPolling();
-                    });
-                });
-            },
+                this.$nextTick(() => {
+                    this.initMap();
+                    this.startPolling();
                     
                     // Request notification permission
                     if ("Notification" in window && Notification.permission === "default") {
                         Notification.requestPermission();
                     }
+
+                    // Enable smooth marker transitions AFTER initial snap-to-position
+                    setTimeout(() => {
+                        document.getElementById('map').classList.add('markers-ready');
+                    }, 1500);
 
                     // REAL-TIME: Listen for Vehicle Location Updates via Reverb
                     if (window.Echo) {
@@ -441,7 +561,7 @@
 
                         window.Echo.channel('fleet-updates')
                             .listen('VehicleLocationUpdated', (e) => {
-
+                                console.log('Live Telemetry Received:', e);
                                 this.handleRealTimeUpdate(e);
                                 
                                 // Show a quick toast or pulse
@@ -450,7 +570,7 @@
 
                         window.Echo.channel('fleet-alerts')
                             .listen('AlertGenerated', (e) => {
-
+                                console.log('New Alert Received:', e);
                                 
                                 // Add to top of list with reactivity
                                 this.recentAlerts = [e.alert, ...this.recentAlerts.slice(0, 4)];
@@ -492,12 +612,7 @@
                             if (vehicle) {
                                 this.selectVehicle(vehicle);
                             }
-                            // Clean up URL so refresh doesn't trigger this again
-                            window.history.replaceState({}, document.title, "/dashboard");
                         }, 1000);
-                    } else {
-                        // FORCE CLOSE MODAL ON STARTUP just in case
-                        this.inspectingAlert = null;
                     }
                 });
             },
@@ -507,11 +622,18 @@
                     zoomControl: false,
                     attributionControl: false,
                     fadeAnimation: true,
-                }).setView([30.9010, 75.8573], 12); // Centered on Ludhiana, Punjab
+                }).setView([30.9010, 75.8573], 12);
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap contributors'
+                // Prevent HUD clicks from interacting with map
+                this.$nextTick(() => {
+                    if (this.$refs.selectionHud) {
+                        L.DomEvent.disableClickPropagation(this.$refs.selectionHud);
+                    }
+                });
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20,
+                    attribution: ''
                 }).addTo(this.map);
 
                 this.map.on('move', () => {
@@ -519,7 +641,9 @@
                     this.viewportCoords = `${center.lat.toFixed(4)}° N, ${center.lng.toFixed(4)}° E`;
                 });
 
+                // Close selection on map click, but NOT during playback
                 this.map.on('click', () => {
+                    if (this.isVisualising) return;
                     this.selectedVehicle = null;
                     this.isFollowing = false;
                     this.map.flyTo([30.9010, 75.8573], 12);
@@ -558,7 +682,16 @@
                 this.vehicles.forEach(vehicle => {
                     if (vehicle.latest_telematics) {
                         const log = vehicle.latest_telematics;
-                        const coords = [log.location.coordinates[1], log.location.coordinates[0]];
+                        let coords = null;
+                        
+                        if (log.location && log.location.coordinates) {
+                            coords = [log.location.coordinates[1], log.location.coordinates[0]];
+                        } else if (typeof log.location === 'string' && log.location.includes('POINT')) {
+                            const match = log.location.match(/POINT\((.+) (.+)\)/);
+                            if (match) coords = [parseFloat(match[2]), parseFloat(match[1])];
+                        }
+
+                        if (!coords || isNaN(coords[0]) || isNaN(coords[1])) return;
 
                         // 1. Handle the Marker (The Vehicle Dot)
                         if (this.markers[vehicle.id]) {
@@ -579,15 +712,16 @@
                                 }
                             }
                         } else {
+                            const initialHeading = log.heading || 0;
                             const icon = L.divIcon({
                                 className: 'custom-vengo-icon',
                                 html: `
-                                    <div class="relative flex items-center justify-center">
+                                    <div class="relative flex items-center justify-center animate-fleetco-fade-in">
                                         <!-- Directional Shadow -->
                                         <div class="absolute h-12 w-12 rounded-full bg-primary/20 blur-md"></div>
                                         
                                         <!-- Top-Down Vehicle Icon -->
-                                        <div class="vehicle-rotation" style="transform: rotate(${log.heading || 0}deg)">
+                                        <div class="vehicle-rotation" style="transform: rotate(${initialHeading}deg); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#ff8a00" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
                                             </svg>
@@ -598,7 +732,7 @@
                                 iconAnchor: [20, 20]
                             });
 
-                            this.markers[vehicle.id] = L.marker(coords, { icon })
+                            this.markers[vehicle.id] = L.marker(coords, { icon, zIndexOffset: 1000 })
                                 .addTo(this.map)
                                 .bindTooltip(
                                     `<div>${vehicle.license_plate}</div>` + 
@@ -749,83 +883,201 @@
 
             async visualiseMission() {
                 if (!this.selectedVehicle) return;
+                this.isPlaybackLoading = true;
+                this.isVisualising = false; // Ensure HUD is hidden during load
                 this.clearPlayback();
-                this.isVisualising = true;
 
                 try {
                     const response = await fetch(`/api/vehicles/${this.selectedVehicle.id}/playback`);
+                    if (!response.ok) throw new Error('API Error');
                     const data = await response.json();
-                    this.playbackPath = data.path;
+                    
+                    this.playbackPath = (data.path || []).filter(p => p && p.lat !== null && p.lng !== null).map(p => ({
+                        ...p,
+                        lat: parseFloat(p.lat),
+                        lng: parseFloat(p.lng)
+                    })).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
 
                     if (this.playbackPath.length < 2) {
-                        alert("Insufficient historical data for this mission.");
-                        this.isVisualising = false;
+                        alert("No movement recorded for this unit in the last 24 hours.");
+                        this.isPlaybackLoading = false;
                         return;
                     }
 
-                    // Draw the static path
-                    const latlngs = this.playbackPath.map(p => [p.lat, p.lng]);
-                    this.playbackPolyline = L.polyline(latlngs, {
+                    this.isVisualising = true;
+                    this.isPlaybackLoading = false;
+
+                    // Use a direct map reference to avoid Alpine Proxy issues
+                    const map = this.map;
+                    if (!map) {
+                        console.error("Map instance not found during playback initialization.");
+                        return;
+                    }
+
+                    // 1. Draw the "Ghost" Path (Full Route)
+                    const ghostPoints = this.playbackPath.map(p => L.latLng(p.lat, p.lng));
+                    this.playbackPolyline = L.polyline(ghostPoints, {
+                        color: '#ff8a00',
+                        weight: 2,
+                        opacity: 0.2,
+                        dashArray: '5, 5'
+                    }).addTo(map);
+
+                    // 2. Prepare the "Played" Path (The Trail)
+                    this.playedPolyline = L.polyline([], {
                         color: '#ff8a00',
                         weight: 3,
                         opacity: 0.8,
                         lineJoin: 'round'
-                    }).addTo(this.map);
+                    }).addTo(map);
 
-                    this.map.fitBounds(this.playbackPolyline.getBounds(), { padding: [50, 50] });
+                    // 3. Render Incident Markers
+                    (data.alerts || []).forEach(alert => {
+                        const aLat = parseFloat(alert.lat);
+                        const aLng = parseFloat(alert.lng);
+                        if (!isNaN(aLat) && !isNaN(aLng)) {
+                            const marker = L.circleMarker([aLat, aLng], {
+                                radius: 8,
+                                color: '#ef4444',
+                                fillColor: '#ef4444',
+                                fillOpacity: 0.6,
+                                weight: 2
+                            }).addTo(map).bindTooltip(`${alert.type.toUpperCase()} - ${alert.time}`, { className: 'glass-tooltip' });
+                            this.playbackAlertMarkers.push(marker);
+                        }
+                    });
 
-                    // Start Animation
+                    // 4. Fit Bounds
+                    const bounds = L.latLngBounds(ghostPoints);
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds, { padding: [100, 100], duration: 1.5 });
+                    }
+
+                    // 5. Start Playback
                     this.playbackIndex = 0;
+                    this.isPlaying = true;
                     this.animatePlayback();
                 } catch (error) {
-                    console.error('Playback error:', error);
+                    console.error('Playback initialization error:', error);
+                    alert("System failed to initialize playback. Please try again.");
                     this.isVisualising = false;
+                    this.isPlaying = false;
+                    this.isPlaybackLoading = false;
                 }
             },
 
             animatePlayback() {
-                if (!this.isVisualising || this.playbackIndex >= this.playbackPath.length) {
-                    this.isVisualising = false;
+                if (!this.isVisualising || !this.isPlaying) return;
+
+                if (this.playbackIndex >= this.playbackPath.length) {
+                    this.isPlaying = false;
                     return;
                 }
 
                 const point = this.playbackPath[this.playbackIndex];
-                const coords = [point.lat, point.lng];
+                if (!point) return;
 
+                const coords = [point.lat, point.lng];
+                const map = this.map;
+                if (!map) return;
+
+                // Update Marker
                 if (!this.playbackMarker) {
                     const icon = L.divIcon({
                         className: 'playback-icon',
                         html: `
                             <div class="relative flex items-center justify-center">
-                                <div class="absolute h-12 w-12 rounded-full bg-primary opacity-20 animate-fleetco-pulse"></div>
-                                <div class="h-3 w-3 rounded-full bg-white border-2 border-primary shadow-[0_0_15px_#ff8a00]"></div>
+                                <div class="absolute h-12 w-12 rounded-full bg-primary opacity-20 animate-pulse"></div>
+                                <div class="vehicle-rotation transition-all duration-300">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" fill="#ff8a00" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
                             </div>
                         `,
                         iconSize: [40, 40],
                         iconAnchor: [20, 20]
                     });
-                    this.playbackMarker = L.marker(coords, { icon }).addTo(this.map);
+                    this.playbackMarker = L.marker(coords, { zIndexOffset: 2000, icon: icon }).addTo(map);
                 } else {
                     this.playbackMarker.setLatLng(coords);
+                    const rotation = this.playbackMarker.getElement()?.querySelector('.vehicle-rotation');
+                    if (rotation) rotation.style.transform = `rotate(${point.heading || 0}deg)`;
                 }
 
-                this.map.panTo(coords);
+                // Update Trail
+                if (this.playedPolyline) {
+                    this.playedPolyline.addLatLng(coords);
+                }
+                
+                // Pan map smoothly
+                map.panTo(coords, { animate: true, duration: 0.1 });
+
                 this.playbackIndex++;
                 
-                // Speed-based animation delay (faster playback)
-                setTimeout(() => this.animatePlayback(), 150);
+                // Dynamic speed based on multiplier
+                const baseDelay = 200; 
+                const delay = baseDelay / this.playbackSpeedMultiplier;
+                
+                this.playbackTimer = setTimeout(() => this.animatePlayback(), delay);
+            },
+
+            togglePlayback() {
+                this.isPlaying = !this.isPlaying;
+                if (this.isPlaying) {
+                    if (this.playbackIndex >= this.playbackPath.length) {
+                        this.playbackIndex = 0;
+                        if (this.playedPolyline) this.playedPolyline.setLatLngs([]);
+                    }
+                    this.animatePlayback();
+                } else {
+                    if (this.playbackTimer) clearTimeout(this.playbackTimer);
+                }
+            },
+
+            scrubPlayback(event) {
+                if (!this.playbackPath.length) return;
+
+                const rect = event.currentTarget.getBoundingClientRect();
+                const ratio = (event.clientX - rect.left) / rect.width;
+                this.playbackIndex = Math.floor(ratio * this.playbackPath.length);
+                if (this.playbackIndex >= this.playbackPath.length) this.playbackIndex = this.playbackPath.length - 1;
+                
+                // Update trail immediately
+                const points = this.playbackPath.slice(0, this.playbackIndex + 1);
+                if (this.playedPolyline) {
+                    this.playedPolyline.setLatLngs(points.map(p => [p.lat, p.lng]));
+                }
+                
+                if (this.playbackPath[this.playbackIndex]) {
+                    const coords = [this.playbackPath[this.playbackIndex].lat, this.playbackPath[this.playbackIndex].lng];
+                    if (this.playbackMarker) this.playbackMarker.setLatLng(coords);
+                    if (this.map) this.map.panTo(coords);
+                }
             },
 
             clearPlayback() {
                 this.isVisualising = false;
-                if (this.playbackPolyline) {
-                    this.map.removeLayer(this.playbackPolyline);
-                    this.playbackPolyline = null;
+                this.isPlaying = false;
+                if (this.playbackTimer) clearTimeout(this.playbackTimer);
+
+                const map = this.map;
+                if (map) {
+                    if (this.playbackPolyline) map.removeLayer(this.playbackPolyline);
+                    if (this.playedPolyline) map.removeLayer(this.playedPolyline);
+                    if (this.playbackMarker) map.removeLayer(this.playbackMarker);
+                    
+                    if (this.playbackAlertMarkers) {
+                        this.playbackAlertMarkers.forEach(m => map.removeLayer(m));
+                    }
+                    
+                    map.flyTo([30.9010, 75.8573], 12);
                 }
-                if (this.playbackMarker) {
-                    this.map.removeLayer(this.playbackMarker);
-                    this.playbackMarker = null;
-                }
+                
+                this.playbackAlertMarkers = [];
+                this.playbackPolyline = null;
+                this.playedPolyline = null;
+                this.playbackMarker = null;
                 this.playbackPath = [];
                 this.playbackIndex = 0;
             },

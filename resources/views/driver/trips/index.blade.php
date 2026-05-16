@@ -55,28 +55,19 @@
                     <tbody class="divide-y divide-[#1a1a1a]">
                         @foreach($trips as $trip)
                             @php
-                                $status = $trip->end_time ? 'Completed' : 'Incomplete';
-                                $statusColor = $status === 'Completed' ? 'bg-[#10b981]/10 text-[#10b981]' : 'bg-[#ff8a00]/10 text-[#ff8a00]';
-                                
-                                $duration = '—';
-                                if ($trip->start_time && ($trip->end_time || now())) {
-                                    $end = $trip->end_time ?? now();
-                                    $mins = $trip->start_time->diffInMinutes($end);
-                                    $h = intdiv($mins, 60);
-                                    $m = $mins % 60;
-                                    $duration = ($h > 0 ? $h . 'h ' : '') . $m . 'm';
-                                }
+                                $status = $trip->end_time ? 'Completed' : 'In Progress';
+                                $statusColor = $status === 'Completed' ? 'bg-[#10b981]/10 text-[#10b981]' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse';
                             @endphp
                             <tr class="hover:bg-white/[0.02] transition-colors {{ $loop->even ? 'bg-[#0d0d0d]' : 'bg-[#111111]' }}">
                                 <td class="px-6 py-4">
-                                    <div class="text-sm font-bold text-white">{{ $trip->start_time ? $trip->start_time->format('M d, Y') : '—' }}</div>
-                                    <div class="text-xs text-[#555]">{{ $trip->start_time ? $trip->start_time->format('H:i') : '—' }}</div>
+                                    <div class="text-sm font-bold text-white">{{ $trip->start_time ? $trip->start_time->timezone('Asia/Kolkata')->format('M d, Y') : '—' }}</div>
+                                    <div class="text-xs text-[#555]">{{ $trip->start_time ? $trip->start_time->timezone('Asia/Kolkata')->format('H:i') : '—' }}</div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-white font-mono">{{ $duration }}</td>
+                                <td class="px-6 py-4 text-sm text-white font-mono">{{ $trip->duration }}</td>
                                 <td class="px-6 py-4 text-sm text-[#ff8a00] font-bold">{{ number_format($trip->distance, 1) }} KM</td>
                                 <td class="px-6 py-4 text-sm text-white">{{ number_format($trip->average_speed, 1) }} KM/H</td>
                                 <td class="px-6 py-4">
-                                    <span class="text-[9px] px-2 py-1 rounded uppercase font-bold {{ $statusColor }}">
+                                    <span class="text-[9px] px-2.5 py-1 rounded-full uppercase font-black tracking-widest {{ $statusColor }}">
                                         {{ $status }}
                                     </span>
                                 </td>

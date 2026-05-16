@@ -38,7 +38,10 @@
                 this.issueType = 'Engine';
                 this.description = '';
                 this.toastOpen = true;
-                setTimeout(() => this.toastOpen = false, 3000);
+                setTimeout(() => {
+                    this.toastOpen = false;
+                    window.location.reload();
+                }, 1500);
             })
             .catch(err => {
                 this.submitting = false;

@@ -155,7 +155,8 @@
                         'currentLog' => $currentLog,
                         'previousSeconds' => $previousSeconds,
                         'currentSegmentStart' => $currentSegmentStart,
-                        'accumulatedSeconds' => $accumulatedSeconds
+                        'accumulatedSeconds' => $accumulatedSeconds,
+                        'vehicle' => $vehicle
                     ])
                 </div>
             </div>
@@ -194,6 +195,44 @@
                         <span class="text-[10px] font-bold uppercase tracking-widest">No Link</span>
                     </div>
                 @endif
+            </div>
+
+            <!-- Service Log History -->
+            <div class="glass-obsidian rounded-2xl md:rounded-[2rem] border border-white/10 p-5 md:p-6 shadow-2xl space-y-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Service Log</span>
+                    <a href="{{ route('driver.maintenance.index') }}" class="text-[10px] font-bold text-orange-500 hover:text-orange-400 uppercase tracking-widest transition-colors flex items-center gap-1 group">
+                        View All History
+                        <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                </div>
+                
+                <div class="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                    @forelse($maintenanceHistory as $record)
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/5 group hover:border-white/10 transition-colors">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-[11px] font-bold text-white">{{ $record->service_type }}</span>
+                                @php
+                                    $statusColor = [
+                                        'reported' => 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
+                                        'in_progress' => 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+                                        'resolved' => 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+                                    ][$record->status] ?? 'text-zinc-500 bg-zinc-500/10 border-zinc-500/20';
+                                @endphp
+                                <span class="text-[8px] px-2 py-0.5 rounded-full uppercase font-bold border {{ $statusColor }}">
+                                    {{ str_replace('_', ' ', $record->status) }}
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-zinc-500 line-clamp-2 italic leading-relaxed">"{{ $record->notes }}"</p>
+                            <div class="text-[8px] text-zinc-600 mt-2 uppercase font-bold tracking-wider">{{ $record->created_at->format('d M, Y') }}</div>
+                        </div>
+                    @empty
+                        <div class="py-8 text-center opacity-30">
+                            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest">No Active Reports</span>
+                        </div>
+                    @endforelse
+                </div>
             </div>
 
         </div>
@@ -329,11 +368,12 @@
             // Driver is currently ON DUTY
             // previousSeconds = all completed on-duty seconds before this segment
             const previousSeconds = {{ (int) max(0, $previousSeconds) }};
-            const segmentStart = new Date("{{ $currentSegmentStart }}").getTime();
+            const segmentStart = {{ (int) $currentSegmentStart }};
+            if (!segmentStart) return;
 
             function tick() {
                 const now = Date.now();
-                const liveSeconds = Math.floor((now - segmentStart) / 1000);
+                const liveSeconds = Math.max(0, Math.floor((now - segmentStart) / 1000));
                 const total = previousSeconds + liveSeconds;
 
                 const h = Math.floor(total / 3600).toString().padStart(2, '0');
@@ -357,18 +397,28 @@
             const m = Math.floor((total % 3600) / 60).toString().padStart(2, '0');
             const s = (total % 60).toString().padStart(2, '0');
             display.innerText = `${h}:${m}:${s}`;
+        @else
+            // Driver is Off Duty — Reset to Zero
+            display.innerText = "00:00:00";
         @endif
     })();
-    // 3. SATELLITE UPLINK ENGINE (Live Tracking)
+    // 3. SATELLITE UPLINK ENGINE (Live Tracking with Smart Throttle)
     (function() {
         let watchId = null;
+        let lastPingTime = 0;
+        const PING_INTERVAL = 2000; // 2 seconds (Ideal for performance vs smoothness)
         const isOnDuty = {{ $isOnDuty ? 'true' : 'false' }};
 
         if (isOnDuty && "geolocation" in navigator) {
-
+            console.log("Uplink Engine: Initializing Satellite Link...");
             
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
+                    const now = Date.now();
+                    
+                    // Throttle Check: Only ping if PING_INTERVAL has passed
+                    if (now - lastPingTime < PING_INTERVAL) return;
+                    
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     
@@ -392,10 +442,12 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
+                    }).then(() => {
+                        lastPingTime = now; // Update timestamp only on success
                     }).catch(err => console.error("Uplink: Tunnel Timeout", err));
                 },
                 (error) => console.warn("Uplink: Satellite Blocked", error),
-                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+                { enableHighAccuracy: true, maximumAge: 5000, timeout: 5000 }
             );
         }
 

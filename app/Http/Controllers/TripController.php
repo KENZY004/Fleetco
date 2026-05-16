@@ -78,4 +78,25 @@ class TripController extends Controller
 
         return view('trips.show', compact('trip', 'logs', 'alerts'));
     }
+
+    /**
+     * Delete a trip from history.
+     */
+    public function destroy(Trip $trip)
+    {
+        $trip->delete();
+        return redirect()->back()->with('success', 'Trip record successfully removed from history.');
+    }
+
+    /**
+     * Wipe all trip history and telemetry breadcrumbs.
+     */
+    public function clearAll()
+    {
+        // Use delete() instead of truncate() to avoid Foreign Key constraint issues in SQLite/Postgres
+        \App\Models\TelematicsLog::query()->delete();
+        \App\Models\Trip::query()->delete();
+        
+        return redirect()->route('trips.index')->with('success', 'All mission history and telemetry data has been permanently cleared.');
+    }
 }

@@ -9,7 +9,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Monoton&display=swap" rel="stylesheet">
     
     <!-- Scripts & Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,6 +23,7 @@
                     },
                     fontFamily: {
                         heading: ['Plus Jakarta Sans', 'sans-serif'],
+                        monoton: ['Monoton', 'cursive'],
                     }
                 }
             }
@@ -38,6 +39,7 @@
 
     <style>
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-monoton { font-family: 'Monoton', cursive; }
         [x-cloak] { display: none !important; }
         
         :root {
@@ -64,7 +66,7 @@
         <!-- Brand -->
         <a href="{{ route('dashboard') }}" class="mb-12 group">
             <div class="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 transition-transform group-hover:scale-105">
-                <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span class="font-monoton text-4xl text-black select-none leading-none mt-1">F</span>
             </div>
         </a>
 

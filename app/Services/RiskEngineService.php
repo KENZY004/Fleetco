@@ -60,12 +60,22 @@ class RiskEngineService
      */
     protected function detectSpeeding(TelematicsLog $log, Driver $driver): bool
     {
-        $speedLimit = 80;  // Standard urban speed limit in km/h
+        $speedLimit = \App\Models\Setting::get('speed_limit', 80);
         $threshold = $speedLimit + 10; // Allow 10km/h buffer before flagging
 
         if ($log->speed > $threshold) {
             $impact = 5.00;
             
+            // Cooldown check: Don't spam speeding alerts
+            $recent = RiskEvent::where('driver_id', $driver->id)
+                ->where('type', 'speeding')
+                ->where('occurred_at', '>', now()->subMinutes(3))
+                ->exists();
+
+            if ($recent) {
+                return false;
+            }
+
             $event = RiskEvent::create([
                 'driver_id' => $driver->id,
                 'vehicle_id' => $log->vehicle_id,
@@ -82,6 +92,20 @@ class RiskEngineService
 
             // Broadcast real-time alert
             event(new \App\Events\AlertGenerated($event));
+
+            // Send Email Alert
+            try {
+                $adminEmail = config('mail.from.address') ?? 'fleetcosupport@gmail.com';
+                $emailData = [
+                    'vehicleName' => $log->vehicle->name ?? 'Unknown Vehicle',
+                    'driverName' => $driver->name,
+                    'incidentType' => 'Speeding Violation',
+                    'deviation' => round($log->speed, 1) . ' km/h in ' . $speedLimit . ' km/h zone',
+                ];
+                Mail::to($adminEmail)->send(new SecurityAlert($emailData));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("RiskEngine: Speeding email failed: " . $e->getMessage());
+            }
 
             $this->applyScorePenalty($driver, $impact);
             return true;

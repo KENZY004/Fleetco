@@ -66,11 +66,90 @@
         </div>
     </div>
 
+    {{-- Pending Driver Reports (New Section) --}}
+    @if($pendingIssues->count() > 0)
+    <div class="bg-zinc-950 border border-orange-500/20 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden mb-8 shadow-[0_0_50px_rgba(249,115,22,0.05)]">
+        <div class="px-6 md:px-8 py-5 md:py-6 border-b border-orange-500/10 flex items-center justify-between bg-orange-500/[0.02]">
+            <div class="flex items-center gap-3">
+                <div class="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></div>
+                <h3 class="text-[10px] md:text-sm font-bold text-white uppercase tracking-widest">Pending Driver Reports</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-orange-500/10 text-[8px] md:text-[9px] font-black text-orange-500 uppercase">{{ $pendingIssues->count() }} Unresolved</span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-white/5">
+                        <th class="px-8 py-5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Reported Date</th>
+                        <th class="px-8 py-5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Issue Type</th>
+                        <th class="px-8 py-5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Driver Notes</th>
+                        <th class="px-8 py-5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                @foreach($pendingIssues as $issue)
+                    <tr class="hover:bg-white/[0.01] transition-colors" x-data="{ showResolveModal: false }">
+                        <td class="px-8 py-6">
+                            <div class="text-white font-bold text-sm">{{ $issue->created_at->format('M d, Y') }}</div>
+                        </td>
+                        <td class="px-8 py-6">
+                            <span class="px-3 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[10px] font-bold uppercase tracking-wider">
+                                {{ $issue->service_type }}
+                            </span>
+                        </td>
+                        <td class="px-8 py-6 max-w-xs">
+                            <div class="text-zinc-400 italic text-sm truncate">"{{ $issue->notes }}"</div>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                            <button @click="showResolveModal = true" class="px-4 py-2 rounded-full bg-white text-black text-[9px] font-black uppercase tracking-wider hover:bg-orange-500 hover:text-white transition-all">
+                                Resolve & Log
+                            </button>
+
+                            {{-- RESOLVE MODAL (Local to row) --}}
+                            <x-fleet-modal name="showResolveModal" title="Resolve Driver Report" subtitle="Official Maintenance Log">
+                                <form action="{{ route('vehicles.maintenance.resolve', $issue->id) }}" method="POST" class="space-y-5 text-left">
+                                    @csrf
+                                    <div class="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10 mb-4">
+                                        <div class="text-[9px] font-bold text-orange-500 uppercase tracking-widest mb-1">Issue Reported:</div>
+                                        <div class="text-white font-bold text-sm mb-2">{{ $issue->service_type }}</div>
+                                        <div class="text-zinc-400 italic text-xs">"{{ $issue->notes }}"</div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Repair Cost (₹)</label>
+                                            <input type="number" name="cost" required placeholder="0.00" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-orange-500/50 transition-colors">
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Odometer Reading (KM)</label>
+                                            <input type="number" name="odometer_reading" required value="{{ $vehicle->odometer }}" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-orange-500/50 transition-colors">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Resolution Notes</label>
+                                        <textarea name="notes" rows="3" placeholder="What was fixed? (e.g. Replaced front tyres)" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-orange-500/50 transition-colors"></textarea>
+                                    </div>
+                                    <div class="flex gap-4 pt-2">
+                                        <button type="button" @click="showResolveModal = false" class="flex-1 py-4 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">Cancel</button>
+                                        <button type="submit" class="flex-1 py-4 bg-orange-500 text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20">Finalize & Log</button>
+                                    </div>
+                                </form>
+                            </x-fleet-modal>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    </div>
+    @endif
+
     {{-- Maintenance Ledger --}}
     <div class="bg-zinc-950 border border-white/5 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
         <div class="px-6 md:px-8 py-5 md:py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-            <h3 class="text-[10px] md:text-sm font-bold text-white uppercase tracking-widest">Service History</h3>
-            <span class="px-3 py-1 rounded-full bg-white/5 text-[8px] md:text-[9px] font-black text-zinc-500 uppercase">{{ $records->count() }} Records</span>
+            <h3 class="text-[10px] md:text-sm font-bold text-white uppercase tracking-widest">Official Service History</h3>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-[8px] md:text-[9px] font-black text-zinc-500 uppercase">{{ $records->count() }} Finalized Records</span>
         </div>
         
         <div class="hidden md:block overflow-x-auto">
@@ -90,7 +169,7 @@
                             <div class="text-white font-bold text-sm">{{ $record->service_date->format('M d, Y') }}</div>
                         </td>
                         <td class="px-8 py-6">
-                            <span class="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
+                            <span class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">
                                 {{ $record->service_type }}
                             </span>
                         </td>
@@ -103,9 +182,8 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-8 py-16 text-center">
-                            <div class="text-zinc-600 italic text-sm mb-2">No maintenance records found.</div>
-                            <button @click="showLogModal = true" class="text-primary text-[10px] font-bold uppercase tracking-widest hover:underline">Log your first service</button>
+                        <td colspan="4" class="px-8 py-16 text-center text-zinc-600 italic text-sm">
+                            No finalized service records found.
                         </td>
                     </tr>
                 @endforelse

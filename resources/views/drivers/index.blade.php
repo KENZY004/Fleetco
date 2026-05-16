@@ -236,7 +236,7 @@
             </div>
             <div>
                 <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Phone Number</label>
-                <input type="text" name="phone_number" :value="editDriver.phone_number" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
+                <input type="text" name="phone_number" :value="editDriver.phone_number" placeholder="+91 98765 43210" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary/50 transition-colors">
             </div>
             <div>
                 <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">License Number</label>

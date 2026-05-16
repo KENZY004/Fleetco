@@ -1,7 +1,7 @@
 @extends(auth()->user()->role === 'driver' ? 'driver.layouts.app' : 'layouts.app')
 
 @section('content')
-<div class="flex flex-col gap-6 h-[calc(100vh-10rem)]" x-data="tripReplay()" x-init="init()">
+<div class="flex flex-col gap-6 min-h-[calc(100vh-6rem)] pb-24 lg:pb-0" x-data="tripReplay()" x-init="init()">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
@@ -23,31 +23,31 @@
             </div>
         </div>
 
-        <div class="flex gap-3 shrink-0">
-            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
-                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Distance</div>
-                <div class="text-base font-bold text-white">{{ number_format($trip->distance, 2) }} km</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full sm:w-auto">
+            <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Distance</div>
+                <div class="text-sm md:text-base font-bold text-white">{{ number_format($trip->distance, 2) }} km</div>
             </div>
-            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
-                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Avg Speed</div>
-                <div class="text-base font-bold text-white">{{ number_format($trip->average_speed, 1) }} km/h</div>
+            <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Avg Speed</div>
+                <div class="text-sm md:text-base font-bold text-white">{{ number_format($trip->average_speed, 1) }} km/h</div>
             </div>
-            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
-                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Pings</div>
-                <div class="text-base font-bold text-white" x-text="logs.length"></div>
+            <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Pings</div>
+                <div class="text-sm md:text-base font-bold text-white" x-text="logs.length"></div>
             </div>
-            <div class="px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
-                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Incidents</div>
-                <div class="text-base font-bold {{ count($alerts ?? []) > 0 ? 'text-red-400' : 'text-emerald-400' }}">{{ count($alerts ?? []) }}</div>
+            <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                <div class="text-[8px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Incidents</div>
+                <div class="text-sm md:text-base font-bold {{ count($alerts ?? []) > 0 ? 'text-red-400' : 'text-emerald-400' }}">{{ count($alerts ?? []) }}</div>
             </div>
         </div>
     </div>
 
     {{-- Main Content --}}
-    <div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden min-h-0">
+    <div class="flex-1 grid grid-cols-12 gap-4 md:gap-6">
 
         {{-- Map --}}
-        <div class="col-span-12 lg:col-span-9 relative bg-zinc-950 border border-white/5 rounded-[2rem] overflow-hidden">
+        <div class="col-span-12 lg:col-span-9 relative bg-zinc-950 border border-white/5 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden h-[400px] lg:h-auto min-h-[400px]">
             <div id="trip-map" class="absolute inset-0 z-0"></div>
 
             {{-- No data overlay --}}
@@ -59,45 +59,45 @@
             </div>
 
             {{-- Speed HUD --}}
-            <div x-show="logs.length > 0" class="absolute top-6 left-6 z-10 glass-obsidian px-5 py-4 rounded-2xl border border-white/10 pointer-events-none">
-                <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Live Speed</div>
-                <div class="font-heading text-2xl font-bold text-white" x-text="currentSpeed + ' km/h'">—</div>
+            <div x-show="logs.length > 0" class="absolute top-4 left-4 md:top-6 md:left-6 z-10 glass-obsidian px-3 py-2 md:px-5 md:py-4 rounded-xl md:rounded-2xl border border-white/10 pointer-events-none">
+                <div class="text-[7px] md:text-[9px] text-zinc-500 uppercase font-bold tracking-widest mb-0.5 md:mb-1">Live Speed</div>
+                <div class="font-heading text-lg md:text-2xl font-bold text-white" x-text="currentSpeed + ' km/h'">—</div>
             </div>
 
             {{-- Playback Controls --}}
-            <div x-show="logs.length > 0" class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-5 px-7 py-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl">
+            <div x-show="logs.length > 0" class="absolute bottom-4 md:bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto z-10 flex items-center gap-2 md:gap-5 px-3 py-2 md:px-7 md:py-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-full shadow-2xl">
 
                 {{-- Rewind --}}
-                <button @click="rewind()" class="p-2 text-zinc-500 hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                <button @click="rewind()" class="p-2 text-zinc-500 hover:text-white transition-colors shrink-0">
+                    <svg class="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
                 </button>
 
                 {{-- Play/Pause --}}
-                <button @click="togglePlayback()" class="w-12 h-12 bg-primary text-black rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-lg shadow-primary/20">
+                <button @click="togglePlayback()" class="w-10 h-10 md:w-12 md:h-12 bg-primary text-black rounded-full flex items-center justify-center hover:scale-105 transition-all shadow-lg shadow-primary/20 shrink-0">
                     <template x-if="!isPlaying">
-                        <svg class="h-5 w-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg class="h-4 w-4 md:h-5 md:w-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     </template>
                     <template x-if="isPlaying">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        <svg class="h-4 w-4 md:h-5 md:w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </template>
                 </button>
 
                 {{-- Progress bar --}}
-                <div class="flex flex-col gap-1 min-w-[180px]">
-                    <div class="flex justify-between text-[9px] font-mono text-zinc-500 mb-0.5">
-                        <span x-text="currentTime">—</span>
+                <div class="flex-1 flex flex-col gap-1 min-w-0 md:min-w-[180px]">
+                    <div class="flex justify-between text-[8px] md:text-[9px] font-mono text-zinc-500 mb-0.5">
+                        <span x-text="currentTime" class="truncate">—</span>
                         <span x-text="Math.round(progress) + '%'">0%</span>
                     </div>
-                    <div class="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer" @click="scrub($event)">
+                    <div class="h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer" @click="scrub($event)">
                         <div class="h-full bg-primary transition-all rounded-full" :style="'width:' + progress + '%'"></div>
                     </div>
                 </div>
 
                 {{-- Speed control --}}
-                <select x-model="playSpeed" class="bg-white/10 border-0 rounded-lg px-3 py-2 text-xs text-white font-bold outline-none">
-                    <option value="50">2×</option>
-                    <option value="100" selected>1×</option>
-                    <option value="200">0.5×</option>
+                <select x-model="playSpeed" class="bg-white/10 border-0 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-xs text-white font-bold outline-none appearance-none cursor-pointer shrink-0">
+                    <option value="50" class="bg-zinc-900 text-white">2×</option>
+                    <option value="100" class="bg-zinc-900 text-white" selected>1×</option>
+                    <option value="200" class="bg-zinc-900 text-white">0.5×</option>
                 </select>
             </div>
         </div>

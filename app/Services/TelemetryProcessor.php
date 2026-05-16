@@ -68,7 +68,8 @@ class TelemetryProcessor
             ->first();
 
         // 1. Detect Trip Start
-        if (!$currentTrip && $log->speed > 0) {
+        // Start a trip if there's no current trip and a driver is assigned (even if speed is 0)
+        if (!$currentTrip && $vehicle->current_driver_id) {
             $currentTrip = Trip::create([
                 'vehicle_id' => $vehicle->id,
                 'driver_id'  => $vehicle->current_driver_id,

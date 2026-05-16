@@ -32,4 +32,10 @@ class Trip extends Model
     {
         return $this->belongsTo(Driver::class);
     }
+
+    public function getDurationAttribute()
+    {
+        $end = $this->end_time ?? now();
+        return $this->start_time->diff($end)->format('%h h %i m');
+    }
 }

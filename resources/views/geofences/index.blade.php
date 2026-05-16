@@ -1,50 +1,56 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="h-[calc(100vh-140px)] flex flex-col gap-6" x-data="geofenceBuilder()">
+<div class="min-h-[calc(100vh-100px)] flex flex-col gap-6 pb-24 lg:pb-0" x-data="geofenceBuilder()">
     
     {{-- Page Header --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <div class="text-[10px] font-bold tracking-widest text-orange-500 uppercase mb-2">Spatial Intelligence</div>
-            <h1 class="font-heading text-3xl font-bold tracking-tight">Geofence Builder</h1>
-            <p class="text-zinc-500 text-sm mt-1">Draw restricted zones and operational hubs on the map.</p>
+            <h1 class="font-heading text-2xl md:text-3xl font-bold tracking-tight">Geofence Builder</h1>
+            <p class="text-zinc-500 text-xs md:text-sm mt-1">Draw restricted zones and operational hubs on the map.</p>
         </div>
         
-        <div class="flex gap-4">
+        <div class="flex gap-3">
             <template x-if="points.length > 0">
-                <button @click="clearDraft()" class="px-6 py-3 border border-white/10 rounded-full text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">
-                    Clear Draft
-                </button>
+                <div class="flex gap-3">
+                    <button @click="undo()" class="flex-1 md:flex-none px-4 md:px-6 py-3 border border-white/10 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                        Undo
+                    </button>
+                    <button @click="clearDraft()" class="flex-1 md:flex-none px-4 md:px-6 py-3 border border-white/10 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-all">
+                        Clear
+                    </button>
+                </div>
             </template>
             <button 
                 @click="saveGeofence()" 
                 :disabled="points.length < 3"
-                class="flex items-center gap-3 px-8 py-3 bg-white text-black rounded-full text-[11px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                class="flex-1 md:flex-none flex items-center justify-center gap-3 px-6 md:px-8 py-3 bg-white text-black rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider hover:bg-white/90 transition-all shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                Save Geofence
+                Save Zone
             </button>
         </div>
     </div>
 
-    <div class="flex-1 flex gap-6 min-h-0">
+    <div class="flex-1 flex flex-col lg:flex-row gap-6">
         {{-- Map Canvas --}}
-        <div class="flex-1 glass-obsidian rounded-[2.5rem] overflow-hidden border border-white/10 relative">
-            <div id="geofenceMap" class="w-full h-full z-10"></div>
+        <div class="flex-1 glass-obsidian rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative h-[450px] lg:h-[650px]">
+            <div id="geofenceMap" class="absolute inset-0 z-10"></div>
             
             {{-- Instructions Overlay --}}
-            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] px-6 py-3 bg-black/80 backdrop-blur-md rounded-full border border-white/10 text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-4">
-                <span :class="points.length === 0 ? 'text-primary' : ''">1. Click Map to drop points</span>
+            <div class="absolute bottom-4 md:bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto z-[1000] px-4 md:px-6 py-2 md:py-3 bg-black/80 backdrop-blur-md rounded-xl md:rounded-full border border-white/10 text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center justify-center md:justify-start gap-2 md:gap-4 pointer-events-none">
+                <span :class="points.length === 0 ? 'text-primary' : ''" class="truncate">1. Drop Points</span>
                 <span class="opacity-20">|</span>
-                <span :class="points.length >= 3 ? 'text-primary' : ''">2. Form a shape (min 3 points)</span>
+                <span :class="points.length >= 3 ? 'text-primary' : ''" class="truncate">2. Form Shape</span>
                 <span class="opacity-20">|</span>
-                <span :class="isSaving ? 'text-primary' : ''">3. Save Zone</span>
+                <span :class="isSaving ? 'text-primary' : ''" class="truncate">3. Save</span>
             </div>
         </div>
 
         {{-- Geofence List / Sidebar --}}
-        <div class="w-80 flex flex-col gap-6 shrink-0 overflow-y-auto custom-scrollbar pr-2">
+        <div class="w-full lg:w-80 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 md:gap-6 shrink-0 overflow-y-auto custom-scrollbar pr-2">
             @forelse($geofences as $gf)
                 <x-fleet-card class="p-6 relative group">
                     <div class="flex items-center justify-between mb-4">
@@ -125,19 +131,26 @@
             existingGeofences: @json($geofences),
 
             init() {
-                window.addEventListener('load', () => {
-                    this.map = L.map('geofenceMap', {
-                        zoomControl: false,
-                        attributionControl: false
-                    }).setView([31.3831, 75.3857], 13);
+                this.map = L.map('geofenceMap', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([31.3831, 75.3857], 13);
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap contributors'
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20
                 }).addTo(this.map);
 
                 // Add zoom control to right
                 L.control.zoom({ position: 'topright' }).addTo(this.map);
+
+                // Fix for blank map on mobile/resize
+                setTimeout(() => {
+                    this.map.invalidateSize();
+                }, 800);
+
+                window.addEventListener('resize', () => {
+                    if (this.map) this.map.invalidateSize();
+                });
 
                 // Click to place points
                 this.map.on('click', (e) => {
@@ -160,17 +173,18 @@
             },
 
             addPoint(lat, lng) {
-
+                console.log('Adding Point:', lat, lng);
                 this.points.push([lat, lng]);
                 
                 // Add marker
-                const marker = L.circleMarker([lat, lng], {
-                    radius: 6,
-                    color: '#fff',
-                    fillColor: '#ff8a00',
-                    fillOpacity: 1,
-                    weight: 2
-                }).addTo(this.map);
+                const dotIcon = L.divIcon({
+                    className: '',
+                    html: `<div style="width:12px;height:12px;background:#ff8a00;border:2px solid white;border-radius:50%;box-shadow:0 0 10px rgba(255,138,0,0.5)"></div>`,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+
+                const marker = L.marker([lat, lng], { icon: dotIcon }).addTo(this.map);
                 this.markers.push(marker);
 
                 // Update/Draw polygon
@@ -182,6 +196,28 @@
                         fillOpacity: 0.3,
                         dashArray: '5, 10'
                     }).addTo(this.map);
+                }
+            },
+
+            undo() {
+                if (this.points.length === 0) return;
+                
+                // Remove last point and marker
+                this.points.pop();
+                const lastMarker = this.markers.pop();
+                if (lastMarker) this.map.removeLayer(lastMarker);
+
+                // Redraw polygon
+                if (this.polygon) this.map.removeLayer(this.polygon);
+                if (this.points.length >= 2) {
+                    this.polygon = L.polygon(this.points, {
+                        color: '#ff8a00',
+                        weight: 3,
+                        fillOpacity: 0.3,
+                        dashArray: '5, 10'
+                    }).addTo(this.map);
+                } else {
+                    this.polygon = null;
                 }
             },
 

@@ -37,9 +37,12 @@
                                 <h4 class="text-sm font-bold text-white tracking-tight truncate" x-text="formatType(alert.type, alert.details)"></h4>
                                 <span class="text-[10px] font-medium text-zinc-600" x-text="timeAgo(alert.occurred_at)"></span>
                             </div>
-                            <p class="text-xs text-zinc-500 font-medium">
-                                Unit <span class="text-zinc-300 font-bold tracking-wider" x-text="alert.vehicle?.license_plate"></span> • Impact: -<span x-text="alert.impact_score"></span>
-                            </p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Unit <span class="text-zinc-400" x-text="alert.vehicle?.license_plate"></span></span>
+                                <span class="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[9px] font-black border border-red-500/10 whitespace-nowrap uppercase tracking-tighter">
+                                    -<span x-text="alert.impact_score"></span> PTS
+                                </span>
+                            </div>
                         </div>
                     </div>
                     

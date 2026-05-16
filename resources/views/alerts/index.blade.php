@@ -141,9 +141,9 @@
                             </td>
 
                             {{-- Impact --}}
-                            <td class="px-8 py-6">
+                            <td class="px-8 py-6 min-w-[120px]">
                                 @if($alert->impact_score > 0)
-                                    <span class="px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">
+                                    <span class="inline-flex items-center gap-1 whitespace-nowrap px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20 uppercase tracking-wider">
                                         -{{ $alert->impact_score }} PTS
                                     </span>
                                 @else

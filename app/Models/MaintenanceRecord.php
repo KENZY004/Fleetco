@@ -14,6 +14,7 @@ class MaintenanceRecord extends Model
         'vehicle_id',
         'driver_id',
         'service_type',
+        'status',
         'odometer_reading',
         'cost',
         'notes',

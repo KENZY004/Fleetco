@@ -38,6 +38,71 @@ class RouteController extends Controller
         return view('fleet.routes.show', compact('route'));
     }
 
+    public function edit($id)
+    {
+        $fleetId = Auth::user()->fleet_id;
+        $route = FleetRoute::findOrFail($id);
+        
+        // Security
+        if ($route->fleet_id !== $fleetId) {
+            abort(403);
+        }
+
+        $drivers = User::where('fleet_id', $fleetId)->where('role', 'driver')->get();
+        $vehicles = Vehicle::where('fleet_id', $fleetId)->get();
+        $geofences = \App\Models\Landmark::all();
+
+        return view('fleet.routes.edit', compact('route', 'drivers', 'vehicles', 'geofences'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $route = FleetRoute::findOrFail($id);
+        
+        // Security
+        if ($route->fleet_id !== Auth::user()->fleet_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'driver_id' => 'nullable|exists:users,id',
+            'vehicle_id' => 'nullable|exists:vehicles,id',
+            'scheduled_for' => 'nullable|date',
+            'waypoints' => 'required|json',
+            'status' => 'nullable|string|in:draft,active,completed'
+        ]);
+
+        // Conflict Check: Is this vehicle already busy? (excluding current route)
+        if ($validated['vehicle_id']) {
+            $busy = FleetRoute::where('vehicle_id', $validated['vehicle_id'])
+                ->where('status', 'active')
+                ->where('id', '!=', $id)
+                ->exists();
+            
+            if ($busy) {
+                return back()->withErrors(['vehicle_id' => 'Conflict: This vehicle is already assigned to an active mission.'])->withInput();
+            }
+        }
+
+        // Determine status based on assignment if not explicitly provided
+        $status = $validated['status'] ?? $route->status;
+        if (!$validated['status'] && $validated['driver_id'] && $validated['vehicle_id'] && $route->status === 'draft') {
+            $status = 'active';
+        }
+
+        $route->update([
+            'name' => $validated['name'],
+            'driver_id' => $validated['driver_id'],
+            'vehicle_id' => $validated['vehicle_id'],
+            'scheduled_for' => $validated['scheduled_for'],
+            'waypoints' => json_decode($validated['waypoints'], true),
+            'status' => $status,
+        ]);
+
+        return redirect()->route('fleet.routes.show', $route->id)->with('success', 'Route updated successfully.');
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

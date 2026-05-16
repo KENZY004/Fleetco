@@ -58,12 +58,14 @@
             <div class="grid grid-cols-2 gap-4">
                 <div class="p-4 rounded-xl bg-white/5">
                     <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Total Pings</div>
-                    <div class="text-lg font-bold text-white">{{ $vehicle->telematics_logs_count }}</div>
+                    <div id="ping-count-{{ $vehicle->id }}" class="text-lg font-bold text-white transition-all duration-500">{{ $vehicle->telematics_logs_count }}</div>
                 </div>
                 <div class="p-4 rounded-xl bg-white/5">
                     <div class="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Last Active</div>
                     <div class="text-sm font-bold text-white">
-                        {{ $vehicle->latestTelematics ? $vehicle->latestTelematics->captured_at->diffForHumans() : '—' }}
+                        <span id="last-active-{{ $vehicle->id }}" class="transition-all duration-500">
+                            {{ $vehicle->latestTelematics ? $vehicle->latestTelematics->captured_at->diffForHumans() : '—' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -214,6 +216,36 @@
             showEditModal: false,
             editVehicle: {},
             editDriverId: null,
+
+            init() {
+                // Listen for real-time telemetry pings
+                if (typeof Echo !== 'undefined') {
+                    Echo.channel('fleet-updates')
+                        .listen('.VehicleLocationUpdated', (e) => {
+                            // The event properties are broadcast directly
+                            this.updateLiveStats(e);
+                        });
+                }
+            },
+
+            updateLiveStats(data) {
+                const vehicleId = data.vehicleId;
+                const pingEl = document.getElementById(`ping-count-${vehicleId}`);
+                const activeEl = document.getElementById(`last-active-${vehicleId}`);
+                
+                if (pingEl) {
+                    let current = parseInt(pingEl.innerText) || 0;
+                    pingEl.innerText = current + 1;
+                    pingEl.classList.add('text-orange-500', 'scale-110');
+                    setTimeout(() => pingEl.classList.remove('text-orange-500', 'scale-110'), 1000);
+                }
+
+                if (activeEl) {
+                    activeEl.innerText = 'Just now';
+                    activeEl.classList.add('text-emerald-500');
+                    setTimeout(() => activeEl.classList.remove('text-emerald-500'), 2000);
+                }
+            },
 
             openEditModal(vehicle, driverId) {
                 this.editVehicle = vehicle;

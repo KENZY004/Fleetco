@@ -6,10 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>FleetCo | Access</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Monoton&display=swap" rel="stylesheet">
     <style>
         body { background-color: #020202; font-family: 'Inter', sans-serif; color: white; }
         .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-monoton { font-family: 'Monoton', cursive; }
         .glass-obsidian { background: rgba(8, 8, 12, 0.8); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); }
     </style>
 </head>

@@ -12,28 +12,32 @@ class VehicleRepository
      */
     public function getAllWithStatus(): Collection
     {
-        $query = Vehicle::with(['driver', 'latestTelematics', 'activeRoute']);
+        $user = auth()->user();
+        $fleetId = $user?->fleet_id;
         
-        if (auth()->check() && auth()->user()->fleet_id) {
-            $query->where('fleet_id', auth()->user()->fleet_id);
-        }
-
-        $vehicles = $query->get();
+        $vehicles = Vehicle::with([
+                'driver', 
+                'latestTelematics', 
+                'activeRoute',
+                'driver.dutyLogs' => function($q) {
+                    $q->whereNull('ended_at')->where('status', 'on_duty');
+                }
+            ])
+            ->withCount('telematicsLogs')
+            ->when($fleetId, function($q) use ($fleetId) {
+                return $q->where('fleet_id', $fleetId);
+            })
+            ->get();
+            
         $timeout = \Carbon\Carbon::now()->subSeconds(45);
 
-        // Map through vehicles and force status based on Duty + Telemetry
         $vehicles->each(function ($vehicle) use ($timeout) {
-            // Check if assigned driver is currently ON DUTY
-            $isOnDuty = $vehicle->driver && $vehicle->driver->dutyLogs()
-                ->whereNull('ended_at')
-                ->where('status', 'on_duty')
-                ->exists();
+            // Check if assigned driver has an active ON DUTY log from eager load
+            $isOnDuty = $vehicle->driver && $vehicle->driver->dutyLogs->isNotEmpty();
 
             if ($isOnDuty) {
-                // If on duty, they are ALWAYS active
                 $vehicle->status = 'active';
             } elseif ($vehicle->status !== 'offline' && (!$vehicle->latestTelematics || $vehicle->latestTelematics->captured_at->lt($timeout))) {
-                // Otherwise, fall back to telemetry timeout
                 $vehicle->status = 'offline';
             }
         });

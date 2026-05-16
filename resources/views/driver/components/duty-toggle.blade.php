@@ -2,7 +2,8 @@
     'currentLog' => null,
     'previousSeconds' => 0,
     'currentSegmentStart' => null,
-    'accumulatedSeconds' => 0
+    'accumulatedSeconds' => 0,
+    'vehicle' => null
 ])
 
 @php
@@ -11,8 +12,9 @@
 
 <div x-data="{ 
         status: '{{ $status }}', 
+        hasVehicle: {{ $vehicle ? 'true' : 'false' }},
         previousSeconds: {{ (int) $previousSeconds }},
-        segmentStart: {{ $currentSegmentStart ? "new Date('$currentSegmentStart').getTime()" : 'null' }},
+        segmentStart: {{ $currentSegmentStart ?? 'null' }},
         accumulated: {{ (int) $accumulatedSeconds }},
         timer: '00:00:00',
         updateTimer() {
@@ -39,10 +41,11 @@
         <form action="{{ route('driver.duty.on') }}" method="POST" class="w-full">
             @csrf
             <button type="submit" 
+                :disabled="!hasVehicle || status === 'on_duty'"
                 @click="window.dispatchEvent(new CustomEvent('duty-starting')); triggerInstantUplink();"
-                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border"
+                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border disabled:opacity-30 disabled:cursor-not-allowed"
                 :class="status === 'on_duty' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'">
-                On Duty
+                <span x-text="hasVehicle ? (status === 'on_duty' ? 'On Duty' : 'Start Duty') : 'No Asset'"></span>
             </button>
         </form>
 
@@ -50,9 +53,10 @@
         <form action="{{ route('driver.duty.break') }}" method="POST" class="w-full">
             @csrf
             <button type="submit" 
-                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border"
+                :disabled="!hasVehicle || status === 'break' || status === 'off_duty'"
+                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border disabled:opacity-30 disabled:cursor-not-allowed"
                 :class="status === 'break' ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'">
-                Break
+                <span x-text="hasVehicle ? (status === 'break' ? 'On Break' : 'Take Break') : 'No Asset'"></span>
             </button>
         </form>
 
@@ -60,9 +64,10 @@
         <form action="{{ route('driver.duty.off') }}" method="POST" class="w-full" onsubmit="return confirm('Are you sure you want to go OFF DUTY? This will end your current shift.');">
             @csrf
             <button type="submit" 
-                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border"
+                :disabled="!hasVehicle || status === 'off_duty'"
+                class="w-full py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border disabled:opacity-30 disabled:cursor-not-allowed"
                 :class="status === 'off_duty' ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-white/5 border-white/5 text-zinc-600 hover:text-white'">
-                Off Duty
+                <span x-text="hasVehicle ? (status === 'off_duty' ? 'Shift Ended' : 'End Shift') : 'No Asset'"></span>
             </button>
         </form>
     </div>
